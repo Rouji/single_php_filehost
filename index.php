@@ -51,9 +51,8 @@ else if (isset($argv[1]) &&       //file was called from cmd, to purge old files
 {
     purgeFiles();
 }
-else
+else //nothing special going on, print info text
 {
-    //nothing special going on, print info text
     printInfo();
 }
 
@@ -235,7 +234,7 @@ is non-linear and skewed in favour of small files.
 The exact formula for determining the maximum age for 
 a file is:
 
-MIN_AGE + (MAX_AGE - MIN_AGE) * (1-(FILE_SIZE/MAX_AGE))^$DECAY_EXP
+MIN_AGE + (MAX_AGE - MIN_AGE) * (1-(FILE_SIZE/MAX_SIZE))^$DECAY_EXP
 </pre>
 </body>
 </html>
