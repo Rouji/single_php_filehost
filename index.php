@@ -95,12 +95,20 @@ function storeFile($name, $tmpFile, $formatted = false)
     global $ID_LENGTH;
     global $HTTP_PROTO;
     global $DOWNLOAD_URL;
+    global $MAX_FILESIZE;
 
 
     //create folder, if it doesn't exist
     if (!file_exists($STORE_PATH))
     {
         mkdir($STORE_PATH, 0750, true); //TODO: error handling
+    }
+
+    //check file size
+    if (filesize($tmpFile) > $MAX_FILESIZE * 1024 * 1024)
+    {
+        header("HTTP/1.0 507 Max File Size Exceeded");
+        return;
     }
 
     $ext = getExtension($name);
@@ -128,7 +136,7 @@ function storeFile($name, $tmpFile, $formatted = false)
     else
     {
         //TODO: proper error handling
-        printf("An error occurred while uploading file.");
+        header("HTTP/1.0 520 Unknown Error");
     }
 }
 
