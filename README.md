@@ -7,14 +7,14 @@ On successful upload, it returns a link to the uploaded file. Serving the file t
 There's also a mechanism for removing files over a certain age, which can be invoked by calling the script with a commandline argument.
 
 ## Config
-All configuration is done using the global variables at the top of index.php. Hopefully, they're explained well enough in the short comments besides them.
+All configuration is done using the global variables at the top of **index.php**. Hopefully, they're explained well enough in the short comments besides them.
 
 To accommodate for larger uploads, you'll also need to set the following values in your php.ini:  
 upload_max_filesize  
 post_max_size  
 max_input_time  
 max_execution_time  
-(The output of index.php will also warn you, if any of those are not set too small)
+(The output of index.php will also warn you, if any of those are set too small)
 
 The code responsible for the default info text can be found at the very bottom of index.php, in case you want to reword anything.
 
