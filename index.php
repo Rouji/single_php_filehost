@@ -2,7 +2,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 // global config
 ////////////////////////////////////////////////////////////////////////////////
-$MAX_FILESIZE=512;          //max. filesize in MB
+$MAX_FILESIZE=512;          //max. filesize in MiB
 $MAX_FILEAGE=180;           //max. age of files in days
 $MIN_FILEAGE=31;            //min. age of files in days
 $DECAY_EXP=5;               //high values favour smaller files (must be uneven)
@@ -171,7 +171,7 @@ function purgeFiles()
 
         $file = $STORE_PATH . $file;
 
-        $fileSize = filesize($file) / (1000*1000); //size in MB
+        $fileSize = filesize($file) / (1024*1024); //size in MiB
         $fileAge = (time()-filemtime($file)) / (60*60*24); //age in days
 
         //keep all files below the min age
@@ -191,7 +191,7 @@ function purgeFiles()
         {
             unlink($file);
 
-            printf("deleted \"%s\", %d MB, %d days old\n",
+            printf("deleted \"%s\", %d MiB, %d days old\n",
                    $file,
                    $fileSize,
                    $fileAge);
@@ -243,7 +243,7 @@ selection input.)
 
 
  === File Sizes etc. ===
-The maximum allowed file size is $MAX_FILESIZE MB.
+The maximum allowed file size is $MAX_FILESIZE MiB.
 
 Files are kept for a minimum of $MIN_FILEAGE, and a maximum of $MAX_FILEAGE Days.
 
