@@ -198,46 +198,50 @@ function printInfo()
 
     $url = $HTTP_PROTO."://".$_SERVER["HTTP_HOST"].$_SERVER['REQUEST_URI'];
 
-    echo <<<EOT
-<html>
-<head></head>
-<body>
+echo <<<EOT
 <pre>
-========== How To Upload ==========
-You can upload files to this site via a simple HTTP POST, 
-e.g. using curl:
+ === How To Upload ===
+You can upload files to this site via a simple HTTP POST, e.g. using curl:
 curl -F "file=@/path/to/your/file.jpg" $url
 
-Or by choosing a file and clicking "Upload" below:
+On Android, you can use an app called <a href="https://play.google.com/store/apps/details?id=eu.imouto.hupl">Hupl</a>.
+
+
+Or simply choose a file and click "Upload" below:
 </pre>
-<form id="frm" action="" method="post" 
-enctype="multipart/form-data">
+<form id="frm" action="" method="post" enctype="multipart/form-data">
 <input type="file" name="file" id="file" />
 <input type="hidden" name="formatted" value="true" />
 <input type="submit" value="Upload"/>
 </form>
 <pre>
-(Hint: If you're lucky, your browser may support drag-
-and-drop onto the file selection input.)
+(Hint: If you're lucky, your browser may support drag-and-drop onto the file 
+selection input.)
 
 
-========== File Sizes etc. ==========
+ === File Sizes etc. ===
 The maximum allowed file size is $MAX_FILESIZE MB.
 
-Files are kept for a minimum of $MIN_FILEAGE, and a maximum 
-of $MAX_FILEAGE Days.
+Files are kept for a minimum of $MIN_FILEAGE, and a maximum of $MAX_FILEAGE Days.
 
-How long a file is kept, depends on its size. Larger 
-files are deleted earlier than small ones. This relation 
-is non-linear and skewed in favour of small files.
+How long a file is kept, depends on its size. Larger files are deleted earlier 
+than small ones. This relation is non-linear and skewed in favour of small 
+files.
 
-The exact formula for determining the maximum age for 
-a file is:
+The exact formula for determining the maximum age for a file is:
 
 MIN_AGE + (MAX_AGE - MIN_AGE) * (1-(FILE_SIZE/MAX_SIZE))^$DECAY_EXP
+
+
+ === Source ===
+The PHP script used to provide this service is open source and available on 
+<a href="https://github.com/Rj48/single_php_filehost">GitHub</a>
+
+
+ === Contact ===
+If you want to report abuse of this service, or have any other inquiries, 
+please write an email to $ADMIN_EMAIL
 </pre>
-</body>
-</html>
 EOT;
 }
 ?>
