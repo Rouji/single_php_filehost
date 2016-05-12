@@ -7,31 +7,39 @@ $MAX_FILEAGE=180;           //max. age of files in days
 $MIN_FILEAGE=31;            //min. age of files in days
 $DECAY_EXP=5;               //high values favour smaller files (must be uneven)
 
-$UPLOAD_TIMEOUT=5*60;       //max. time an upload can take before this times out
+$UPLOAD_TIMEOUT=5*60;       //max. time an upload can take before it times out
 $ID_LENGTH=6;               //length of the random file ID
 $STORE_PATH="files/";       //directory to store uploaded files in
 $DOWNLOAD_URL="%s";         //%s = placeholder for filename
 $HTTP_PROTO="https";        //protocol to use in links
 
-//TODO: do something with this address,
-//but in a way, that doesn't get it spammed by bots
 $ADMIN_EMAIL="complaintsgo@here.com";  //address for inquiries
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// set php parameters
-//
-// NOTE: you also have to set "upload_max_filesize" and "post_max_size" manually
-// in your php.ini. this is only here to limit things, should the webserver
-// config allow even higher values.
-//
-// //TODO: check the currently set values and throw a warning, if they're too
-// low?
+// check php.ini settings and print warnings if anything's not configured 
+// properly
 ////////////////////////////////////////////////////////////////////////////////
-ini_set('upload_max_filesize', $MAX_FILESIZE."M");
-ini_set('post_max_size', $MAX_FILESIZE."M");
-ini_set('max_input_time', $UPLOAD_TIMEOUT);
-ini_set('max_execution_time', $UPLOAD_TIMEOUT);
+function checkConfig()
+{
+    global $MAX_FILESIZE;
+    global $UPLOAD_TIMEOUT;
+    warnConfig('upload_max_filesize', "MAX_FILESIZE", $MAX_FILESIZE);
+    warnConfig('post_max_size', "MAX_FILESIZE", $MAX_FILESIZE);
+    warnConfig('max_input_time', "UPLOAD_TIMEOUT", $UPLOAD_TIMEOUT);
+    warnConfig('max_execution_time', "UPLOAD_TIMEOUT", $UPLOAD_TIMEOUT);
+}
+
+function warnConfig($iniName, $varName, $varValue)
+{
+    $iniValue = intval(ini_get($iniName));
+    if ($iniValue < $varValue)
+        printf("<pre>Warning: php.ini: %s (%s) set lower than %s (%s)\n</pre>",
+            $iniName, 
+            $iniValue,
+            $varName,
+            $varValue);
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -53,6 +61,7 @@ else if (isset($argv[1]) &&       //file was called from cmd, to purge old files
 }
 else //nothing special going on, print info text
 {
+    checkConfig();
     printInfo();
 }
 
@@ -208,6 +217,8 @@ On Android, you can use an app called <a href="https://play.google.com/store/app
 
 
 Or simply choose a file and click "Upload" below:
+(Hint: If you're lucky, your browser may support drag-and-drop onto the file 
+selection input.)
 </pre>
 <form id="frm" action="" method="post" enctype="multipart/form-data">
 <input type="file" name="file" id="file" />
@@ -215,8 +226,6 @@ Or simply choose a file and click "Upload" below:
 <input type="submit" value="Upload"/>
 </form>
 <pre>
-(Hint: If you're lucky, your browser may support drag-and-drop onto the file 
-selection input.)
 
 
  === File Sizes etc. ===
