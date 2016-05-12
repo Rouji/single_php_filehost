@@ -103,7 +103,7 @@ function storeFile($name, $tmpFile, $formatted = false)
         mkdir($STORE_PATH, 0750, true); //TODO: error handling
     }
 
-    $ext = pathinfo($name, PATHINFO_EXTENSION);
+    $ext = getExtension($name);
     $id = rndStr($ID_LENGTH);
     $basename = $id . '.' . $ext;
     $target_file = $STORE_PATH . $basename;
@@ -130,6 +130,18 @@ function storeFile($name, $tmpFile, $formatted = false)
         //TODO: proper error handling
         printf("An error occurred while uploading file.");
     }
+}
+
+function getExtension($path)
+{
+    $ext = pathinfo($path, PATHINFO_EXTENSION);
+    //special handling of .tar.* archives
+    $ext2 = pathinfo(substr($path,0,-(strlen($ext)+1)), PATHINFO_EXTENSION);
+    if ($ext2 === 'tar')
+    {
+        $ext = $ext2.'.'.$ext;
+    }
+    return $ext;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
