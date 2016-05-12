@@ -17,32 +17,6 @@ $ADMIN_EMAIL="complaintsgo@here.com";  //address for inquiries
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// check php.ini settings and print warnings if anything's not configured 
-// properly
-////////////////////////////////////////////////////////////////////////////////
-function checkConfig()
-{
-    global $MAX_FILESIZE;
-    global $UPLOAD_TIMEOUT;
-    warnConfig('upload_max_filesize', "MAX_FILESIZE", $MAX_FILESIZE);
-    warnConfig('post_max_size', "MAX_FILESIZE", $MAX_FILESIZE);
-    warnConfig('max_input_time', "UPLOAD_TIMEOUT", $UPLOAD_TIMEOUT);
-    warnConfig('max_execution_time', "UPLOAD_TIMEOUT", $UPLOAD_TIMEOUT);
-}
-
-function warnConfig($iniName, $varName, $varValue)
-{
-    $iniValue = intval(ini_get($iniName));
-    if ($iniValue < $varValue)
-        printf("<pre>Warning: php.ini: %s (%s) set lower than %s (%s)\n</pre>",
-            $iniName, 
-            $iniValue,
-            $varName,
-            $varValue);
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
 // decide what to do, based on POST parameters etc.
 ////////////////////////////////////////////////////////////////////////////////
 if (isset($_FILES["file"]["name"]) &&              //file was uploaded, store it
@@ -61,8 +35,8 @@ else if (isset($argv[1]) &&       //file was called from cmd, to purge old files
 }
 else //nothing special going on, print info text
 {
-    checkConfig();
-    printInfo();
+    checkConfig(); //check for any php.ini config problems
+    printInfo(); //print info page
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -79,6 +53,32 @@ function rndStr($len)
     }
     return $out;
 }
+
+
+////////////////////////////////////////////////////////////////////////////////
+// check php.ini settings and print warnings if anything's not configured 
+// properly
+////////////////////////////////////////////////////////////////////////////////
+function checkConfig()
+{
+    global $MAX_FILESIZE;
+    global $UPLOAD_TIMEOUT;
+    warnConfig('upload_max_filesize', "MAX_FILESIZE", $MAX_FILESIZE);
+    warnConfig('post_max_size', "MAX_FILESIZE", $MAX_FILESIZE);
+    warnConfig('max_input_time', "UPLOAD_TIMEOUT", $UPLOAD_TIMEOUT);
+    warnConfig('max_execution_time', "UPLOAD_TIMEOUT", $UPLOAD_TIMEOUT);
+}
+function warnConfig($iniName, $varName, $varValue)
+{
+    $iniValue = intval(ini_get($iniName));
+    if ($iniValue < $varValue)
+        printf("<pre>Warning: php.ini: %s (%s) set lower than %s (%s)\n</pre>",
+            $iniName, 
+            $iniValue,
+            $varName,
+            $varValue);
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // store an uploaded file, given its name and temporary path, (e.g. values 
@@ -144,6 +144,7 @@ function getExtension($path)
     return $ext;
 }
 
+
 ////////////////////////////////////////////////////////////////////////////////
 // purge all files older than their retention period allows.
 ////////////////////////////////////////////////////////////////////////////////
@@ -203,6 +204,7 @@ function purgeFiles()
            $numDel,
            $totalSize);
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // print a plaintext info page, explaining what this script does and how to
