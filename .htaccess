@@ -6,3 +6,5 @@
     RewriteCond %{ENV:REDIRECT_STATUS} ^$
     RewriteRule ^(.*)$ files/$1
 </IfModule>
+
+AddCharset UTF-8 .txt
