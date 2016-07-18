@@ -172,7 +172,9 @@ function purgeFiles()
     {
         //skip virtual . and .. files
         if ($file == '.' ||
-            $file == '..')
+            $file == '..' ||
+            $file == '.htaccess' ||
+            $file == '.htpasswd')
         {
             continue;
         }
