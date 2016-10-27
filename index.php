@@ -140,6 +140,7 @@ function storeFile($name, $tmpFile, $formatted = false)
     }
 }
 
+//extract extension from a path (does not include the dot)
 function getExtension($path)
 {
     $ext = pathinfo($path, PATHINFO_EXTENSION);
@@ -149,6 +150,8 @@ function getExtension($path)
     {
         $ext = $ext2.'.'.$ext;
     }
+    //trim extension to max. 7 chars
+    $ext = substr($ext,0,7);
     return $ext;
 }
 
