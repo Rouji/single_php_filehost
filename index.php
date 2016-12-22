@@ -5,7 +5,7 @@
 $MAX_FILESIZE=512;          //max. filesize in MiB
 $MAX_FILEAGE=180;           //max. age of files in days
 $MIN_FILEAGE=31;            //min. age of files in days
-$DECAY_EXP=5;               //high values favour smaller files (must be uneven)
+$DECAY_EXP=2;               //high values favour smaller files (must be uneven)
 
 $UPLOAD_TIMEOUT=5*60;       //max. time an upload can take before it times out
 $ID_LENGTH=6;               //length of the random file ID
