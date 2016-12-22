@@ -41,4 +41,3 @@ $fileMaxAge = $MIN_FILEAGE +
 ```
 ...which is a basic exponential decay curve that favours smaller files, meaning small files are kept longer and really big ones are deleted relatively quickly.  
 **$DECAY_EXP** is one of the configurable globals and basically makes the curve more or less exponential-looking. Set to 1 for a completely linear relationship.  
-**NOTE:** $DECAY_EXP should always be an uneven number
