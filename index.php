@@ -8,7 +8,7 @@ $MIN_FILEAGE=31;            //min. age of files in days
 $DECAY_EXP=2;               //high values penalise larger files
 
 $UPLOAD_TIMEOUT=5*60;       //max. time an upload can take before it times out
-$ID_LENGTH=6;               //length of the random file ID
+$ID_LENGTH=3;               //length of the random file ID
 $STORE_PATH="files/";       //directory to store uploaded files in
 $DOWNLOAD_URL="%s";         //%s = placeholder for filename
 $HTTP_PROTO="https";        //protocol to use in links
