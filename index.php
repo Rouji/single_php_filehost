@@ -305,7 +305,7 @@ MIN_AGE + (MAX_AGE - MIN_AGE) * (1-(FILE_SIZE/MAX_SIZE))^$DECAY_EXP
 
  === Source ===
 The PHP script used to provide this service is open source and available on 
-<a href="https://github.com/Rj48/single_php_filehost">GitHub</a>
+<a href="https://github.com/Rouji/single_php_filehost">GitHub</a>
 
 
  === Contact ===
