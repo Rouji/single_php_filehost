@@ -209,7 +209,7 @@ function purgeFiles()
                       pow(1-($fileSize/$MAX_FILESIZE),$DECAY_EXP);
 
         //delete if older
-        if ($fileAge > $MIN_FILEAGE)
+        if ($fileAge > $fileMaxAge)
         {
             unlink($file);
 
@@ -222,7 +222,7 @@ function purgeFiles()
             $totalSize += $fileSize;
         }
     }
-    printf("Purge finished. Deleted %d files totalling %d MB\n",
+    printf("Purge finished. Deleted %d files totalling %d MiB\n",
            $numDel,
            $totalSize);
 }
