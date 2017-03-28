@@ -238,7 +238,7 @@ function sendShareXConfig()
     $content = <<<EOT
 {
   "Name": "$host",
-  "DestinationType": "None",
+  "DestinationType": "ImageUploader, FileUploader",
   "RequestType": "POST",
   "RequestURL": "$HTTP_PROTO://$host/",
   "FileFormName": "file",
