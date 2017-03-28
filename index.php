@@ -234,10 +234,11 @@ function sendShareXConfig()
 {
     global $HTTP_PROTO;
     $host = $_SERVER["HTTP_HOST"];
-    $filename =  $host.".json";
+    $filename =  $host.".sxcu";
     $content = <<<EOT
 {
   "Name": "$host",
+  "DestinationType": "None",
   "RequestType": "POST",
   "RequestURL": "$HTTP_PROTO://$host/",
   "FileFormName": "file",
