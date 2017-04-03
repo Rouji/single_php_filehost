@@ -120,7 +120,7 @@ function storeFile($name, $tmpFile, $formatted = false)
     do //generate filenames until we get one, that doesn't already exist
     {
         $id = rndStr($len++);
-        $basename = $id . '.' . $ext;
+        $basename = $id . (empty($ext) ? '' : '.' . $ext);
         $target_file = $STORE_PATH . $basename;
     } while (file_exists($target_file));
 
