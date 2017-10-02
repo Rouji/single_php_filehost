@@ -116,13 +116,20 @@ function storeFile($name, $tmpFile, $formatted = false)
     }
 
     $ext = getExtension($name);
-    $len = $ID_LENGTH;
-    do //generate filenames until we get one, that doesn't already exist
+    $tries_per_len=3; //try random names a few times before upping the length
+    for ($len = $ID_LENGTH; ; ++$len)
     {
-        $id = rndStr($len++);
-        $basename = $id . (empty($ext) ? '' : '.' . $ext);
-        $target_file = $STORE_PATH . $basename;
-    } while (file_exists($target_file));
+        echo $len;
+        for ($n=0; $n<=$tries_per_len; ++$n)
+        {
+            $id = rndStr($len);
+            $basename = $id . (empty($ext) ? '' : '.' . $ext);
+            $target_file = $STORE_PATH . $basename;
+
+            if (!file_exists($target_file))
+                break 2;
+        }
+    }
 
     $res = move_uploaded_file($tmpFile, $target_file);
     if ($res)
