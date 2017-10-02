@@ -119,7 +119,6 @@ function storeFile($name, $tmpFile, $formatted = false)
     $tries_per_len=3; //try random names a few times before upping the length
     for ($len = $ID_LENGTH; ; ++$len)
     {
-        echo $len;
         for ($n=0; $n<=$tries_per_len; ++$n)
         {
             $id = rndStr($len);
