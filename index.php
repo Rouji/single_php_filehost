@@ -32,6 +32,10 @@ else if (isset($_GET['sharex']))  //send sharex config
 {
     sendShareXConfig();
 }
+else if (isset($_GET['hupl']))    //send hupl config
+{
+    sendHuplConfig();
+}
 else if (isset($argv[1]) &&       //file was called from cmd, to purge old files
          $argv[1] === 'purge')
 {
@@ -257,6 +261,27 @@ EOT;
     print($content);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// send a Hupl uploader config as .hupl (which is just JSON)
+////////////////////////////////////////////////////////////////////////////////
+function sendHuplConfig()
+{
+    global $HTTP_PROTO;
+    $host = $_SERVER["HTTP_HOST"];
+    $filename =  $host.".hupl";
+    $content = <<<EOT
+{
+  "name": "$host",
+  "type": "http",
+  "targetUrl": "$HTTP_PROTO://$host/",
+  "fileParam": "file"
+}
+EOT;
+    header("Content-type: application/octet-stream");
+    header('Content-Disposition: attachment; filename="'.$filename.'"');
+    header("Content-Length: ".strlen($content));
+    print($content);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // print a plaintext info page, explaining what this script does and how to
@@ -273,6 +298,7 @@ function printInfo()
 
     $url = $HTTP_PROTO."://".$_SERVER["HTTP_HOST"].$_SERVER['REQUEST_URI'];
     $sharexUrl = $url."?sharex";
+    $huplUrl = $url."?hupl";
 
 echo <<<EOT
 <pre>
@@ -281,7 +307,7 @@ You can upload files to this site via a simple HTTP POST, e.g. using curl:
 curl -F "file=@/path/to/your/file.jpg" $url
 
 On Windows, you can use <a href="https://getsharex.com/">ShareX</a> and import <a href="$sharexUrl">this</a> custom uploader.
-On Android, you can use an app called <a href="https://play.google.com/store/apps/details?id=eu.imouto.hupl">Hupl</a>.
+On Android, you can use an app called <a href="https://github.com/Rouji/Hupl">Hupl</a> with <a href="$huplUrl">this</a> uploader.
 
 
 Or simply choose a file and click "Upload" below:
