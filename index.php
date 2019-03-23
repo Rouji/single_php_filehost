@@ -131,7 +131,7 @@ function store_file($name, $tmpFile, $formatted = false)
         {
             unlink($target_file);
             header("HTTP/1.0 400 Bad Request");
-            print("Error 400: File rejected by virus scan");
+            print("Error 400: File rejected by malware scan");
             return;
         }
 
