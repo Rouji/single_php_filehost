@@ -1,110 +1,99 @@
 <?php
-////////////////////////////////////////////////////////////////////////////////
-// global config
-////////////////////////////////////////////////////////////////////////////////
-$MAX_FILESIZE=512;          //max. filesize in MiB
+$MAX_FILESIZE=512;         //max. filesize in MiB
 $MAX_FILEAGE=180;           //max. age of files in days
 $MIN_FILEAGE=31;            //min. age of files in days
-$DECAY_EXP=2;               //high values penalise larger files
+$DECAY_EXP=2;               //high values penalise larger files more
 
 $UPLOAD_TIMEOUT=5*60;       //max. time an upload can take before it times out
 $ID_LENGTH=3;               //length of the random file ID
 $STORE_PATH="files/";       //directory to store uploaded files in
-$DOWNLOAD_URL="%s";         //%s = placeholder for filename
+$LOG_PATH=null;             //path to log uploads + resulting links to
+$DOWNLOAD_PATH="%s";        //the path part of the download url. %s = placeholder for filename
 $HTTP_PROTO="https";        //protocol to use in links
+$CLAM_SCAN=false;           //scan files using clamd
+$MAX_EXT_LEN=7;             //max. length for file extensions
 
-$ADMIN_EMAIL="complaintsgo@here.com";  //address for inquiries
+$ADMIN_EMAIL="admin@example.com";  //address for inquiries
 
 
-////////////////////////////////////////////////////////////////////////////////
-// decide what to do, based on POST parameters etc.
-////////////////////////////////////////////////////////////////////////////////
-if (isset($_FILES["file"]["name"]) &&              //file was uploaded, store it
-    isset($_FILES["file"]["tmp_name"]) &&
-    is_uploaded_file($_FILES["file"]["tmp_name"]))
-{
-    $formatted = isset($_GET["formatted"]) || isset($_POST["formatted"]);
-    storeFile($_FILES["file"]["name"],
-              $_FILES["file"]["tmp_name"],
-              $formatted);
-}
-else if (isset($_GET['sharex']))  //send sharex config
-{
-    sendShareXConfig();
-}
-else if (isset($_GET['hupl']))    //send hupl config
-{
-    sendHuplConfig();
-}
-else if (isset($argv[1]) &&       //file was called from cmd, to purge old files
-         $argv[1] === 'purge')
-{
-    purgeFiles();
-}
-else //nothing special going on, print info text
-{
-    checkConfig(); //check for any php.ini config problems
-    printInfo(); //print info page
-}
-
-////////////////////////////////////////////////////////////////////////////////
 // generate a random string of characters with given length
-////////////////////////////////////////////////////////////////////////////////
-function rndStr($len)
+function rnd_str($len)
 {
     $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
-    $maxIdx = strlen($chars) - 1;
+    $max_idx = strlen($chars) - 1;
     $out = '';
     while ($len--)
     {
-        $out .= $chars[mt_rand(0,$maxIdx)];
+        $out .= $chars[mt_rand(0,$max_idx)];
     }
     return $out;
 }
 
-
-////////////////////////////////////////////////////////////////////////////////
-// check php.ini settings and print warnings if anything's not configured 
-// properly
-////////////////////////////////////////////////////////////////////////////////
-function checkConfig()
+// check php.ini settings and print warnings if anything's not configured properly
+function check_config()
 {
     global $MAX_FILESIZE;
     global $UPLOAD_TIMEOUT;
-    warnConfig('upload_max_filesize', "MAX_FILESIZE", $MAX_FILESIZE);
-    warnConfig('post_max_size', "MAX_FILESIZE", $MAX_FILESIZE);
-    warnConfig('max_input_time', "UPLOAD_TIMEOUT", $UPLOAD_TIMEOUT);
-    warnConfig('max_execution_time', "UPLOAD_TIMEOUT", $UPLOAD_TIMEOUT);
+    warn_config_value('upload_max_filesize', "MAX_FILESIZE", $MAX_FILESIZE);
+    warn_config_value('post_max_size', "MAX_FILESIZE", $MAX_FILESIZE);
+    warn_config_value('max_input_time', "UPLOAD_TIMEOUT", $UPLOAD_TIMEOUT);
+    warn_config_value('max_execution_time', "UPLOAD_TIMEOUT", $UPLOAD_TIMEOUT);
 }
-function warnConfig($iniName, $varName, $varValue)
+
+function warn_config_value($ini_name, $var_name, $var_val)
 {
-    $iniValue = intval(ini_get($iniName));
-    if ($iniValue < $varValue)
+    $ini_val = intval(ini_get($ini_name));
+    if ($ini_val < $var_val)
         printf("<pre>Warning: php.ini: %s (%s) set lower than %s (%s)\n</pre>",
-            $iniName, 
-            $iniValue,
-            $varName,
-            $varValue);
+            $ini_name,
+            $ini_val,
+            $var_name,
+            $var_val);
 }
 
+// runs a file through clamdscan
+// fails silently(!) if clamd is not running or something
+function clam($path)
+{
+    $cmd = 'clamdscan --quiet ' . escapeshellarg($path);
+    $out = '';
+    $ret = -1;
+    exec($cmd, $out, $ret);
+    return $ret != 1;
+}
 
-////////////////////////////////////////////////////////////////////////////////
-// store an uploaded file, given its name and temporary path, (e.g. values 
-// straight out of $_FILES)
+//extract extension from a path (does not include the dot)
+function get_ext($path)
+{
+    global $MAX_EXT_LEN;
+
+    $ext = pathinfo($path, PATHINFO_EXTENSION);
+    //special handling of .tar.* archives
+    $ext2 = pathinfo(substr($path,0,-(strlen($ext)+1)), PATHINFO_EXTENSION);
+    if ($ext2 === 'tar')
+    {
+        $ext = $ext2.'.'.$ext;
+    }
+    //trim extension to max. 7 chars
+    $ext = substr($ext, 0, $MAX_EXT_LEN);
+    return $ext;
+}
+
+// store an uploaded file, given its name and temporary path (e.g. values straight out of $_FILES)
 // files are stored wit a randomised name, but with their original extension
 //
 // $name: original filename
 // $tmpFile: temporary path of uploaded file
 // $formatted: set to true to display formatted message instead of bare link
-////////////////////////////////////////////////////////////////////////////////
-function storeFile($name, $tmpFile, $formatted = false)
+function store_file($name, $tmpFile, $formatted = false)
 {
     global $STORE_PATH;
     global $ID_LENGTH;
     global $HTTP_PROTO;
-    global $DOWNLOAD_URL;
+    global $DOWNLOAD_PATH;
     global $MAX_FILESIZE;
-
+    global $CLAM_SCAN;
+    global $LOG_PATH;
 
     //create folder, if it doesn't exist
     if (!file_exists($STORE_PATH))
@@ -119,13 +108,13 @@ function storeFile($name, $tmpFile, $formatted = false)
         return;
     }
 
-    $ext = getExtension($name);
+    $ext = get_ext($name);
     $tries_per_len=3; //try random names a few times before upping the length
     for ($len = $ID_LENGTH; ; ++$len)
     {
         for ($n=0; $n<=$tries_per_len; ++$n)
         {
-            $id = rndStr($len);
+            $id = rnd_str($len);
             $basename = $id . (empty($ext) ? '' : '.' . $ext);
             $target_file = $STORE_PATH . $basename;
 
@@ -137,48 +126,54 @@ function storeFile($name, $tmpFile, $formatted = false)
     $res = move_uploaded_file($tmpFile, $target_file);
     if ($res)
     {
+        //scan file using clam
+        if ($CLAM_SCAN && !clam($target_file))
+        {
+            unlink($target_file);
+            header("HTTP/1.0 400 Bad Request");
+            print("Error 400: File rejected by virus scan");
+            return;
+        }
+
         //print the download link of the file
-        $url = sprintf("%s://%s/".$DOWNLOAD_URL, 
+        $url = sprintf('%s://%s/'.$DOWNLOAD_PATH,
                        $HTTP_PROTO,
                        $_SERVER["SERVER_NAME"], 
                        $basename);
         if ($formatted)
         {
-            printf("<pre>Access your file here:\n<a href=\"%s\">%s</a></pre>",
-                $url,$url);
+            printf('<pre>Access your file here:\n<a href="%s">%s</a></pre>', $url, $url);
         }
         else
         {
             printf($url);
         }
+
+        // log uploader's IP, original filename, etc.
+        if ($LOG_PATH)
+        {
+            file_put_contents(
+                $LOG_PATH,
+                implode("\t", array(
+                    date('c'),
+                    $_SERVER['REMOTE_ADDR'],
+                    filesize($tmpFile),
+                    escapeshellarg($name),
+                    $basename
+                )) . "\n",
+                FILE_APPEND
+            );
+        }
     }
     else
     {
-        //TODO: proper error handling
+        //TODO: proper error handling?
         header("HTTP/1.0 520 Unknown Error");
     }
 }
 
-//extract extension from a path (does not include the dot)
-function getExtension($path)
-{
-    $ext = pathinfo($path, PATHINFO_EXTENSION);
-    //special handling of .tar.* archives
-    $ext2 = pathinfo(substr($path,0,-(strlen($ext)+1)), PATHINFO_EXTENSION);
-    if ($ext2 === 'tar')
-    {
-        $ext = $ext2.'.'.$ext;
-    }
-    //trim extension to max. 7 chars
-    $ext = substr($ext,0,7);
-    return $ext;
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
 // purge all files older than their retention period allows.
-////////////////////////////////////////////////////////////////////////////////
-function purgeFiles()
+function purge_files()
 {
     global $STORE_PATH;
     global $MAX_FILEAGE;
@@ -186,61 +181,50 @@ function purgeFiles()
     global $MIN_FILEAGE;
     global $DECAY_EXP;
 
-    $numDel = 0;    //number of deleted files
-    $totalSize = 0; //total size of deleted files
+    $num_del = 0;    //number of deleted files
+    $total_size = 0; //total size of deleted files
 
     //for each stored file
     foreach (scandir($STORE_PATH) as $file)
     {
         //skip virtual . and .. files
-        if ($file == '.' ||
-            $file == '..' ||
-            $file == '.htaccess' ||
-            $file == '.htpasswd')
+        if ($file === '.' ||
+            $file === '..')
         {
             continue;
         }
 
         $file = $STORE_PATH . $file;
 
-        $fileSize = filesize($file) / (1024*1024); //size in MiB
-        $fileAge = (time()-filemtime($file)) / (60*60*24); //age in days
+        $file_size = filesize($file) / (1024*1024); //size in MiB
+        $file_age = (time()-filemtime($file)) / (60*60*24); //age in days
 
         //keep all files below the min age
-        if ($fileAge < $MIN_FILEAGE)
+        if ($file_age < $MIN_FILEAGE)
         {
             continue;
         }
 
-        //calculate the maximum age, in days, for this file
-        //minage + (maxage-minage) * (1-(size/maxsize))^exp;
-        $fileMaxAge = $MIN_FILEAGE + 
+        //calculate the maximum age in days for this file
+        $file_max_age = $MIN_FILEAGE +
                       ($MAX_FILEAGE - $MIN_FILEAGE) *
-                      pow(1-($fileSize/$MAX_FILESIZE),$DECAY_EXP);
+                      pow(1-($file_size/$MAX_FILESIZE),$DECAY_EXP);
 
         //delete if older
-        if ($fileAge > $fileMaxAge)
+        if ($file_age > $file_max_age)
         {
             unlink($file);
 
-            printf("deleted \"%s\", %d MiB, %d days old\n",
-                   $file,
-                   $fileSize,
-                   $fileAge);
-
-            $numDel += 1;
-            $totalSize += $fileSize;
+            printf("deleted \"%s\", %d MiB, %d days old\n", $file, $file_size, $file_age);
+            $num_del += 1;
+            $total_size += $file_size;
         }
     }
-    printf("Purge finished. Deleted %d files totalling %d MiB\n",
-           $numDel,
-           $totalSize);
+    printf("Deleted %d files totalling %d MiB\n", $num_del, $total_size);
 }
 
-////////////////////////////////////////////////////////////////////////////////
 // send a ShareX custom uploader config as .json
-////////////////////////////////////////////////////////////////////////////////
-function sendShareXConfig()
+function send_sharex_config()
 {
     global $HTTP_PROTO;
     $host = $_SERVER["HTTP_HOST"];
@@ -261,10 +245,8 @@ EOT;
     print($content);
 }
 
-////////////////////////////////////////////////////////////////////////////////
 // send a Hupl uploader config as .hupl (which is just JSON)
-////////////////////////////////////////////////////////////////////////////////
-function sendHuplConfig()
+function send_hupl_config()
 {
     global $HTTP_PROTO;
     $host = $_SERVER["HTTP_HOST"];
@@ -283,31 +265,35 @@ EOT;
     print($content);
 }
 
-////////////////////////////////////////////////////////////////////////////////
 // print a plaintext info page, explaining what this script does and how to
 // use it, how to upload, etc.
-// essentially the homepage
-////////////////////////////////////////////////////////////////////////////////
-function printInfo()
+function print_index()
 {
     global $ADMIN_EMAIL;
-    global $HTTP_PROTO; global $MAX_FILEAGE;
+    global $HTTP_PROTO;
+    global $MAX_FILEAGE;
     global $MAX_FILESIZE;
     global $MIN_FILEAGE;
     global $DECAY_EXP;
 
     $url = $HTTP_PROTO."://".$_SERVER["HTTP_HOST"].$_SERVER['REQUEST_URI'];
-    $sharexUrl = $url."?sharex";
-    $huplUrl = $url."?hupl";
+    $sharex_url = $url."?sharex";
+    $hupl_url = $url."?hupl";
 
 echo <<<EOT
+<html>
+<head>
+    <title>Filehost</title>
+    <meta name="description" content="Minimalistic service for sharing temporary files." />
+</title>
+<body>
 <pre>
  === How To Upload ===
 You can upload files to this site via a simple HTTP POST, e.g. using curl:
 curl -F "file=@/path/to/your/file.jpg" $url
 
-On Windows, you can use <a href="https://getsharex.com/">ShareX</a> and import <a href="$sharexUrl">this</a> custom uploader.
-On Android, you can use an app called <a href="https://github.com/Rouji/Hupl">Hupl</a> with <a href="$huplUrl">this</a> uploader.
+On Windows, you can use <a href="https://getsharex.com/">ShareX</a> and import <a href="$sharex_url">this</a> custom uploader.
+On Android, you can use an app called <a href="https://github.com/Rouji/Hupl">Hupl</a> with <a href="$hupl_url">this</a> uploader.
 
 
 Or simply choose a file and click "Upload" below:
@@ -345,6 +331,37 @@ The PHP script used to provide this service is open source and available on
 If you want to report abuse of this service, or have any other inquiries, 
 please write an email to $ADMIN_EMAIL
 </pre>
+</body>
+</html>
 EOT;
 }
-?>
+
+
+// decide what to do, based on POST parameters etc.
+if (isset($_FILES["file"]["name"]) &&
+    isset($_FILES["file"]["tmp_name"]) &&
+    is_uploaded_file($_FILES["file"]["tmp_name"]))
+{
+    //file was uploaded, store it
+    $formatted = isset($_GET["formatted"]) || isset($_POST["formatted"]);
+    store_file($_FILES["file"]["name"],
+              $_FILES["file"]["tmp_name"],
+              $formatted);
+}
+else if (isset($_GET['sharex']))
+{
+    send_sharex_config();
+}
+else if (isset($_GET['hupl']))
+{
+    send_hupl_config();
+}
+else if (isset($argv[1]) && $argv[1] === 'purge')
+{
+    purge_files();
+}
+else
+{
+    check_config();
+    print_index();
+}
