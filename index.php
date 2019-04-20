@@ -142,7 +142,7 @@ function store_file($name, $tmpFile, $formatted = false)
                        $basename);
         if ($formatted)
         {
-            printf('<pre>Access your file here:\n<a href="%s">%s</a></pre>', $url, $url);
+            printf('<pre>Access your file here: <a href="%s">%s</a></pre>', $url, $url);
         }
         else
         {
