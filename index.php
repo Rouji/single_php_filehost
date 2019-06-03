@@ -285,7 +285,6 @@ echo <<<EOT
 <head>
     <title>Filehost</title>
     <meta name="description" content="Minimalistic service for sharing temporary files." />
-</title>
 <body>
 <pre>
  === How To Upload ===
