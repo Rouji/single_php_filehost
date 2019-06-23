@@ -281,10 +281,12 @@ function print_index()
     $hupl_url = $url."?hupl";
 
 echo <<<EOT
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>Filehost</title>
+    <title>x0.at Filehost</title>
     <meta name="description" content="Minimalistic service for sharing temporary files." />
+</head>
 <body>
 <pre>
  === How To Upload ===
@@ -299,7 +301,7 @@ Or simply choose a file and click "Upload" below:
 (Hint: If you're lucky, your browser may support drag-and-drop onto the file 
 selection input.)
 </pre>
-<form id="frm" action="" method="post" enctype="multipart/form-data">
+<form id="frm" method="post" enctype="multipart/form-data">
 <input type="file" name="file" id="file" />
 <input type="hidden" name="formatted" value="true" />
 <input type="submit" value="Upload"/>
