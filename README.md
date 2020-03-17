@@ -1,13 +1,13 @@
 # Single .php Filehost
 Simple PHP script, mainly for sharing random files with people using curl. (and thus in an easily scriptable way)
 
-Puts a file sent via POST into a configured directory with a randomised filename but preserving the original file extension, and returns a link to it.  
+Puts a file sent via POST into a configured directory with a randomised filename but preserving the original file extension and returns a link to it.  
 Actually serving the file to people is left to apache to figure out.
 
 There's also a mechanism for removing files over a certain age, which can be invoked by calling the script with a commandline argument.
 
 # Config
-All configuration is done using the global variables at the top of **index.php**. Hopefully, they're explained well enough in the short comments besides them.
+All configuration is done using the global variables at the top of **index.php**. Hopefully they're explained well enough in the short comments besides them.
 
 To accommodate for larger uploads, you'll also need to set the following values in your php.ini:  
 upload_max_filesize  
@@ -42,7 +42,7 @@ Pretty straight forward, I use something like this:
 ```
 
 # Purging Old Files
-To check for any files, that exceed their max age, and delete them, you need to call index.php with the argument "purge"  
+To check for any files that exceed their max age and delete them, you need to call index.php with the argument "purge"  
 ```bash
 php index.php purge
 ```
