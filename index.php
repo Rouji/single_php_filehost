@@ -284,7 +284,7 @@ echo <<<EOT
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>x0.at Filehost</title>
+    <title>Filehost</title>
     <meta name="description" content="Minimalistic service for sharing temporary files." />
 </head>
 <body>
