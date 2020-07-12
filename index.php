@@ -102,9 +102,17 @@ function store_file($name, $tmpFile, $formatted = false)
     }
 
     //check file size
-    if (filesize($tmpFile) > $MAX_FILESIZE * 1024 * 1024)
+    $size = filesize($tmpFile);
+    if ($size > $MAX_FILESIZE * 1024 * 1024)
     {
-        header("HTTP/1.0 507 Max File Size Exceeded");
+        header("HTTP/1.0 413 Payload Too Large");
+        printf("Error 413: Max File Size (%d MiB) Exceeded", $MAX_FILESIZE);
+        return;
+    }
+    if ($size == 0)
+    {
+        header("HTTP/1.0 400 Bad Request");
+        printf("Error 400: Uploaded file is empty", $MAX_FILESIZE);
         return;
     }
 
