@@ -83,9 +83,9 @@ function get_ext($path)
 // files are stored wit a randomised name, but with their original extension
 //
 // $name: original filename
-// $tmpFile: temporary path of uploaded file
+// $tmpfile: temporary path of uploaded file
 // $formatted: set to true to display formatted message instead of bare link
-function store_file($name, $tmpFile, $formatted = false)
+function store_file($name, $tmpfile, $formatted = false)
 {
     global $STORE_PATH;
     global $ID_LENGTH;
@@ -102,7 +102,7 @@ function store_file($name, $tmpFile, $formatted = false)
     }
 
     //check file size
-    $size = filesize($tmpFile);
+    $size = filesize($tmpfile);
     if ($size > $MAX_FILESIZE * 1024 * 1024)
     {
         header("HTTP/1.0 413 Payload Too Large");
@@ -131,7 +131,7 @@ function store_file($name, $tmpFile, $formatted = false)
         }
     }
 
-    $res = move_uploaded_file($tmpFile, $target_file);
+    $res = move_uploaded_file($tmpfile, $target_file);
     if ($res)
     {
         //scan file using clam
@@ -165,7 +165,7 @@ function store_file($name, $tmpFile, $formatted = false)
                 implode("\t", array(
                     date('c'),
                     $_SERVER['REMOTE_ADDR'],
-                    filesize($tmpFile),
+                    filesize($tmpfile),
                     escapeshellarg($name),
                     $basename
                 )) . "\n",
