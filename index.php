@@ -10,8 +10,8 @@ $STORE_PATH="files/";       //directory to store uploaded files in
 $LOG_PATH=null;             //path to log uploads + resulting links to
 $DOWNLOAD_PATH="%s";        //the path part of the download url. %s = placeholder for filename
 $HTTP_PROTO="https";        //protocol to use in links
-$CLAM_SCAN=false;           //scan files using clamd
 $MAX_EXT_LEN=7;             //max. length for file extensions
+$EXTETNAL_HOOK=null;
 
 $ADMIN_EMAIL="admin@example.com";  //address for inquiries
 
@@ -51,17 +51,6 @@ function warn_config_value($ini_name, $var_name, $var_val)
             $var_val);
 }
 
-// runs a file through clamdscan
-// fails silently(!) if clamd is not running or something
-function clam($path)
-{
-    $cmd = 'clamdscan --quiet ' . escapeshellarg($path);
-    $out = '';
-    $ret = -1;
-    exec($cmd, $out, $ret);
-    return $ret != 1;
-}
-
 //extract extension from a path (does not include the dot)
 function get_ext($path)
 {
@@ -92,7 +81,7 @@ function store_file($name, $tmpfile, $formatted = false)
     global $HTTP_PROTO;
     global $DOWNLOAD_PATH;
     global $MAX_FILESIZE;
-    global $CLAM_SCAN;
+    global $EXTETNAL_HOOK;
     global $LOG_PATH;
 
     //create folder, if it doesn't exist
@@ -134,13 +123,20 @@ function store_file($name, $tmpfile, $formatted = false)
     $res = move_uploaded_file($tmpfile, $target_file);
     if ($res)
     {
-        //scan file using clam
-        if ($CLAM_SCAN && !clam($target_file))
+        if ($EXTETNAL_HOOK !== null)
         {
-            unlink($target_file);
-            header("HTTP/1.0 400 Bad Request");
-            print("Error 400: File rejected by malware scan");
-            return;
+            putenv("REMOTE_ADDR=".$_SERVER['REMOTE_ADDR']);
+            putenv("ORIGINAL_NAME=".$name);
+            putenv("STORED_FILE=".$target_file);
+            $ret = -1;
+            $out = exec($EXTETNAL_HOOK, $_ = null, $ret);
+            if ($out !== false && $ret !== 0)
+            {
+                unlink($target_file);
+                header("HTTP/1.0 400 Bad Request");
+                print("Error: ".$out);
+                return;
+            }
         }
 
         //print the download link of the file
