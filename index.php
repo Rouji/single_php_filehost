@@ -12,6 +12,7 @@ $DOWNLOAD_PATH="%s";        //the path part of the download url. %s = placeholde
 $HTTP_PROTO="https";        //protocol to use in links
 $MAX_EXT_LEN=7;             //max. length for file extensions
 $EXTETNAL_HOOK=null;
+$AUTO_FILE_EXT=false;
 
 $ADMIN_EMAIL="admin@example.com";  //address for inquiries
 
@@ -52,10 +53,8 @@ function warn_config_value($ini_name, $var_name, $var_val)
 }
 
 //extract extension from a path (does not include the dot)
-function get_ext($path)
+function ext_by_path($path)
 {
-    global $MAX_EXT_LEN;
-
     $ext = pathinfo($path, PATHINFO_EXTENSION);
     //special handling of .tar.* archives
     $ext2 = pathinfo(substr($path,0,-(strlen($ext)+1)), PATHINFO_EXTENSION);
@@ -63,9 +62,29 @@ function get_ext($path)
     {
         $ext = $ext2.'.'.$ext;
     }
-    //trim extension to max. 7 chars
-    $ext = substr($ext, 0, $MAX_EXT_LEN);
     return $ext;
+}
+
+function ext_by_finfo($path)
+{
+    $finfo = finfo_open(FILEINFO_EXTENSION);
+    $finfo_ext = finfo_file($finfo, $path);
+    finfo_close($finfo);
+    if ($finfo_ext != "???")
+    {
+        return explode("/", $finfo_ext, 2)[0];
+    }
+    else
+    {
+        $finfo = finfo_open();
+        $finfo_info = finfo_file($finfo, $path);
+        finfo_close($finfo);
+        if (strstr($finfo_info, "text") !== false)
+        {
+            return "txt";
+        }
+    }
+    return "";
 }
 
 // store an uploaded file, given its name and temporary path (e.g. values straight out of $_FILES)
@@ -83,6 +102,8 @@ function store_file($name, $tmpfile, $formatted = false)
     global $MAX_FILESIZE;
     global $EXTETNAL_HOOK;
     global $LOG_PATH;
+    global $MAX_EXT_LEN;
+    global $AUTO_FILE_EXT;
 
     //create folder, if it doesn't exist
     if (!file_exists($STORE_PATH))
@@ -105,7 +126,12 @@ function store_file($name, $tmpfile, $formatted = false)
         return;
     }
 
-    $ext = get_ext($name);
+    $ext = ext_by_path($name);
+    if (empty($ext) && $AUTO_FILE_EXT)
+    {
+        $ext = ext_by_finfo($tmpfile);
+    }
+    $ext = substr($ext, 0, $MAX_EXT_LEN);
     $tries_per_len=3; //try random names a few times before upping the length
     for ($len = $ID_LENGTH; ; ++$len)
     {
