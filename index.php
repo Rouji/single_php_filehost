@@ -116,13 +116,13 @@ function store_file($name, $tmpfile, $formatted = false)
     if ($size > $MAX_FILESIZE * 1024 * 1024)
     {
         header("HTTP/1.0 413 Payload Too Large");
-        printf("Error 413: Max File Size (%d MiB) Exceeded", $MAX_FILESIZE);
+        printf("Error 413: Max File Size (%d MiB) Exceeded\n", $MAX_FILESIZE);
         return;
     }
     if ($size == 0)
     {
         header("HTTP/1.0 400 Bad Request");
-        printf("Error 400: Uploaded file is empty", $MAX_FILESIZE);
+        printf("Error 400: Uploaded file is empty\n", $MAX_FILESIZE);
         return;
     }
 
@@ -160,7 +160,7 @@ function store_file($name, $tmpfile, $formatted = false)
             {
                 unlink($target_file);
                 header("HTTP/1.0 400 Bad Request");
-                print("Error: ".$out);
+                print("Error: ".$out."\n");
                 return;
             }
         }
@@ -176,7 +176,7 @@ function store_file($name, $tmpfile, $formatted = false)
         }
         else
         {
-            printf($url);
+            printf($url."\n");
         }
 
         // log uploader's IP, original filename, etc.
