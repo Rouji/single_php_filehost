@@ -11,7 +11,7 @@ $LOG_PATH=null;             //path to log uploads + resulting links to
 $DOWNLOAD_PATH="%s";        //the path part of the download url. %s = placeholder for filename
 $HTTP_PROTO="https";        //protocol to use in links
 $MAX_EXT_LEN=7;             //max. length for file extensions
-$EXTETNAL_HOOK=null;
+$EXTERNAL_HOOK=null;
 $AUTO_FILE_EXT=false;
 
 $ADMIN_EMAIL="admin@example.com";  //address for inquiries
@@ -100,7 +100,7 @@ function store_file($name, $tmpfile, $formatted = false)
     global $HTTP_PROTO;
     global $DOWNLOAD_PATH;
     global $MAX_FILESIZE;
-    global $EXTETNAL_HOOK;
+    global $EXTERNAL_HOOK;
     global $LOG_PATH;
     global $MAX_EXT_LEN;
     global $AUTO_FILE_EXT;
@@ -149,13 +149,13 @@ function store_file($name, $tmpfile, $formatted = false)
     $res = move_uploaded_file($tmpfile, $target_file);
     if ($res)
     {
-        if ($EXTETNAL_HOOK !== null)
+        if ($EXTERNAL_HOOK !== null)
         {
             putenv("REMOTE_ADDR=".$_SERVER['REMOTE_ADDR']);
             putenv("ORIGINAL_NAME=".$name);
             putenv("STORED_FILE=".$target_file);
             $ret = -1;
-            $out = exec($EXTETNAL_HOOK, $_ = null, $ret);
+            $out = exec($EXTERNAL_HOOK, $_ = null, $ret);
             if ($out !== false && $ret !== 0)
             {
                 unlink($target_file);
