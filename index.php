@@ -316,6 +316,7 @@ echo <<<EOT
 <head>
     <title>Filehost</title>
     <meta name="description" content="Minimalistic service for sharing temporary files." />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 </head>
 <body>
 <pre>
