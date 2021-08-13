@@ -1,0 +1,14 @@
+/* Place any CSS styles here. */
+
+body {
+    font-family: sans-serif;
+}
+
+pre {
+    font-family: monospace;
+    padding: 1rem;
+    background-color: #dfdfdf;
+    border: 1px solid #aaa;
+    border-radius: 10px;
+    line-height: 1em;
+}

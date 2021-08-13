@@ -41,6 +41,14 @@ Pretty straight forward, I use something like this:
 </Directory>
 ```
 
+# Styling
+
+Base styles can be found in styles.css and can be modified
+or added to according to your preference. Each element on 
+the page has been coded such that you can create a CSS
+selector for anything that you should want to style, or 
+you can add classes to the existing markup. 
+
 # Purging Old Files
 To check for any files that exceed their max age and delete them, you need to call index.php with the argument "purge"  
 ```bash

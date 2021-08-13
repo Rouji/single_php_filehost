@@ -312,60 +312,96 @@ function print_index()
 
 echo <<<EOT
 <!DOCTYPE html>
+
 <html lang="en">
+
 <head>
     <title>Filehost</title>
     <meta name="description" content="Minimalistic service for sharing temporary files." />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="./styles.css">
 </head>
+
 <body>
-<pre>
- === How To Upload ===
-You can upload files to this site via a simple HTTP POST, e.g. using curl:
+
+<section class="how-to-upload">
+    <h2>Upload via Code or App</h2>
+    <p>
+        You can upload files to this site via a simple HTTP POST, e.g. using curl:
+        <pre>
 curl -F "file=@/path/to/your/file.jpg" $url
+        </pre>
+    </p>
 
-Or if you want to pipe to curl *and* have a file extension, add a "filename":
+    <p>
+        Or if you want to pipe to curl *and* have a file extension, add a "filename":
+        <pre>
 echo "hello" | curl -F "file=@-;filename=.txt" $url
+        </pre>
+    </p>
 
-On Windows, you can use <a href="https://getsharex.com/">ShareX</a> and import <a href="$sharex_url">this</a> custom uploader.
-On Android, you can use an app called <a href="https://github.com/Rouji/Hupl">Hupl</a> with <a href="$hupl_url">this</a> uploader.
+    <p>
+        On Windows, you can use <a href="https://getsharex.com/">ShareX</a> and import <a href="$sharex_url">this</a> custom uploader.
+    </p>
+    <p>
+        On Android, you can use an app called <a href="https://github.com/Rouji/Hupl">Hupl</a> with <a href="$hupl_url">this</a> uploader.
+    </p>
+</section>
 
+<section class="browser-upload">
+    <h2>Browser Upload</h2>
+    <p>
+        Simply choose a file and click "Upload".<br>
+        <em>(Hint: If you're lucky, your browser may support drag-and-drop onto the file 
+        selection input.)</em>
+    </p>
+    <form id="frm" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" id="file">
+        <input type="hidden" name="formatted" value="true">
+        <input type="submit" value="Upload">
+    </form>
+</section>
 
-Or simply choose a file and click "Upload" below:
-(Hint: If you're lucky, your browser may support drag-and-drop onto the file 
-selection input.)
-</pre>
-<form id="frm" method="post" enctype="multipart/form-data">
-<input type="file" name="file" id="file" />
-<input type="hidden" name="formatted" value="true" />
-<input type="submit" value="Upload"/>
-</form>
-<pre>
+<section class="help-text">
+    <h2>Additional Details</h2>
 
+    <h3>File Sizes, Etc.</h3>
+    <p>
+        The maximum allowed file size is $MAX_FILESIZE MiB.
+    </p>
 
- === File Sizes etc. ===
-The maximum allowed file size is $MAX_FILESIZE MiB.
+    <p>
+        Files are kept for a minimum of $MIN_FILEAGE, and a maximum of $MAX_FILEAGE Days.
+    </p>
 
-Files are kept for a minimum of $MIN_FILEAGE, and a maximum of $MAX_FILEAGE Days.
+    <p>
+        How long a file is kept, depends on its size. Larger files are deleted earlier 
+        than small ones. This relation is non-linear and skewed in favour of small 
+        files.
+    </p>
 
-How long a file is kept, depends on its size. Larger files are deleted earlier 
-than small ones. This relation is non-linear and skewed in favour of small 
-files.
-
-The exact formula for determining the maximum age for a file is:
-
+    <p>
+        The exact formula for determining the maximum age for a file is:
+        <pre>
 MIN_AGE + (MAX_AGE - MIN_AGE) * (1-(FILE_SIZE/MAX_SIZE))^$DECAY_EXP
+        </pre>
+    </p>
 
+    <h3>Source</h3>
+    <p>
+        The PHP script used to provide this service is open source and available on 
+        <a href="https://github.com/Rouji/single_php_filehost">GitHub</a>
+    </p>
+</section>
 
- === Source ===
-The PHP script used to provide this service is open source and available on 
-<a href="https://github.com/Rouji/single_php_filehost">GitHub</a>
+<section class="contact">
+    <h2>Contact</h2>
+    <p>
+        If you want to report abuse of this service, or have any other inquiries, 
+        please write an email to <a href="mailto:$ADMIN_EMAIL">$ADMIN_EMAIL</a>.
+    </p>
+</section>
 
-
- === Contact ===
-If you want to report abuse of this service, or have any other inquiries, 
-please write an email to $ADMIN_EMAIL
-</pre>
 </body>
 </html>
 EOT;
