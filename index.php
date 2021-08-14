@@ -17,6 +17,17 @@ $AUTO_FILE_EXT=false;
 $ADMIN_EMAIL="admin@example.com";  //address for inquiries
 
 
+function site_url()
+{
+    $url = 'http';
+    if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+    {
+        $url .= 's';
+    }  
+    $url .= '://' . $_SERVER['HTTP_HOST'] . '/';
+    return $url;
+}
+
 // generate a random string of characters with given length
 function rnd_str($len)
 {
