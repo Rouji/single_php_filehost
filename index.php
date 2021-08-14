@@ -122,7 +122,7 @@ function store_file($name, $tmpfile, $formatted = false)
     if ($size == 0)
     {
         header("HTTP/1.0 400 Bad Request");
-        printf("Error 400: Uploaded file is empty\n", $MAX_FILESIZE);
+        print("Error 400: Uploaded file is empty\n");
         return;
     }
 
