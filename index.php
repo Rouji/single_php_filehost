@@ -147,58 +147,57 @@ function store_file($name, $tmpfile, $formatted = false)
     }
 
     $res = move_uploaded_file($tmpfile, $target_file);
-    if ($res)
-    {
-        if ($EXTERNAL_HOOK !== null)
-        {
-            putenv("REMOTE_ADDR=".$_SERVER['REMOTE_ADDR']);
-            putenv("ORIGINAL_NAME=".$name);
-            putenv("STORED_FILE=".$target_file);
-            $ret = -1;
-            $out = exec($EXTERNAL_HOOK, $_ = null, $ret);
-            if ($out !== false && $ret !== 0)
-            {
-                unlink($target_file);
-                header("HTTP/1.0 400 Bad Request");
-                print("Error: ".$out."\n");
-                return;
-            }
-        }
-
-        //print the download link of the file
-        $url = sprintf('%s://%s/'.$DOWNLOAD_PATH,
-                       $HTTP_PROTO,
-                       $_SERVER["SERVER_NAME"], 
-                       $basename);
-        if ($formatted)
-        {
-            printf('<pre>Access your file here: <a href="%s">%s</a></pre>', $url, $url);
-        }
-        else
-        {
-            printf($url."\n");
-        }
-
-        // log uploader's IP, original filename, etc.
-        if ($LOG_PATH)
-        {
-            file_put_contents(
-                $LOG_PATH,
-                implode("\t", array(
-                    date('c'),
-                    $_SERVER['REMOTE_ADDR'],
-                    filesize($tmpfile),
-                    escapeshellarg($name),
-                    $basename
-                )) . "\n",
-                FILE_APPEND
-            );
-        }
-    }
-    else
+    if (!$res)
     {
         //TODO: proper error handling?
         header("HTTP/1.0 520 Unknown Error");
+        return;
+    }
+    
+    if ($EXTERNAL_HOOK !== null)
+    {
+        putenv("REMOTE_ADDR=".$_SERVER['REMOTE_ADDR']);
+        putenv("ORIGINAL_NAME=".$name);
+        putenv("STORED_FILE=".$target_file);
+        $ret = -1;
+        $out = exec($EXTERNAL_HOOK, $_ = null, $ret);
+        if ($out !== false && $ret !== 0)
+        {
+            unlink($target_file);
+            header("HTTP/1.0 400 Bad Request");
+            print("Error: ".$out."\n");
+            return;
+        }
+    }
+
+    //print the download link of the file
+    $url = sprintf('%s://%s/'.$DOWNLOAD_PATH,
+                    $HTTP_PROTO,
+                    $_SERVER["SERVER_NAME"], 
+                    $basename);
+    if ($formatted)
+    {
+        printf('<pre>Access your file here: <a href="%s">%s</a></pre>', $url, $url);
+    }
+    else
+    {
+        printf($url."\n");
+    }
+
+    // log uploader's IP, original filename, etc.
+    if ($LOG_PATH)
+    {
+        file_put_contents(
+            $LOG_PATH,
+            implode("\t", array(
+                date('c'),
+                $_SERVER['REMOTE_ADDR'],
+                filesize($tmpfile),
+                escapeshellarg($name),
+                $basename
+            )) . "\n",
+            FILE_APPEND
+        );
     }
 }
 
