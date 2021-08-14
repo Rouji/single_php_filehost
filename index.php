@@ -10,6 +10,7 @@ $STORE_PATH="files/";       //directory to store uploaded files in
 $LOG_PATH=null;             //path to log uploads + resulting links to
 $DOWNLOAD_PATH="%s";        //the path part of the download url. %s = placeholder for filename
 $HTTP_PROTO="https";        //protocol to use in links
+$SITE_URL=site_url();
 $MAX_EXT_LEN=7;             //max. length for file extensions
 $EXTERNAL_HOOK=null;
 $AUTO_FILE_EXT=false;
