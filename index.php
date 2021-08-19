@@ -329,10 +329,10 @@ echo <<<EOT
 <pre>
  === How To Upload ===
 You can upload files to this site via a simple HTTP POST, e.g. using curl:
-curl -F "file=@/path/to/your/file.jpg" $url
+curl -F "file=@/path/to/your/file.jpg" $SITE_URL
 
 Or if you want to pipe to curl *and* have a file extension, add a "filename":
-echo "hello" | curl -F "file=@-;filename=.txt" $url
+echo "hello" | curl -F "file=@-;filename=.txt" $SITE_URL
 
 On Windows, you can use <a href="https://getsharex.com/">ShareX</a> and import <a href="$sharex_url">this</a> custom uploader.
 On Android, you can use an app called <a href="https://github.com/Rouji/Hupl">Hupl</a> with <a href="$hupl_url">this</a> uploader.
