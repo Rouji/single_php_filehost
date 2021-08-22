@@ -19,13 +19,16 @@ $ADMIN_EMAIL="admin@example.com";  //address for inquiries
 
 function site_url()
 {
-    $url = 'http';
-    if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+    if (isset($_SERVER['HTTP_HOST']))
     {
-        $url .= 's';
-    }  
-    $url .= '://' . $_SERVER['HTTP_HOST'] . '/';
-    return $url;
+        $url = 'http';
+        if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        {
+            $url .= 's';
+        }  
+        $url .= '://' . $_SERVER['HTTP_HOST'] . '/';
+        return $url;
+    }
 }
 
 // generate a random string of characters with given length
