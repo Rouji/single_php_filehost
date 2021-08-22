@@ -49,21 +49,19 @@ function check_config()
 {
     global $MAX_FILESIZE;
     global $UPLOAD_TIMEOUT;
-    warn_config_value('upload_max_filesize', "MAX_FILESIZE", $MAX_FILESIZE);
-    warn_config_value('post_max_size', "MAX_FILESIZE", $MAX_FILESIZE);
-    warn_config_value('max_input_time', "UPLOAD_TIMEOUT", $UPLOAD_TIMEOUT);
-    warn_config_value('max_execution_time', "UPLOAD_TIMEOUT", $UPLOAD_TIMEOUT);
-}
 
-function warn_config_value($ini_name, $var_name, $var_val)
-{
-    $ini_val = intval(ini_get($ini_name));
-    if ($ini_val < $var_val)
-        printf("<pre>Warning: php.ini: %s (%s) set lower than %s (%s)\n</pre>",
-            $ini_name,
-            $ini_val,
-            $var_name,
-            $var_val);
+    $warn_config_value = function($ini_name, $var_name, $var_val)
+    {
+        $ini_val = intval(ini_get($ini_name));
+        if ($ini_val < $var_val)
+            printf("<pre>Warning: php.ini: %s (%s) set lower than %s (%s)\n</pre>",
+                   $ini_name, $ini_val, $var_name, $var_val);
+    };
+
+    $warn_config_value('upload_max_filesize', "MAX_FILESIZE", $MAX_FILESIZE);
+    $warn_config_value('post_max_size', "MAX_FILESIZE", $MAX_FILESIZE);
+    $warn_config_value('max_input_time', "UPLOAD_TIMEOUT", $UPLOAD_TIMEOUT);
+    $warn_config_value('max_execution_time', "UPLOAD_TIMEOUT", $UPLOAD_TIMEOUT);
 }
 
 //extract extension from a path (does not include the dot)
