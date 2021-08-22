@@ -9,13 +9,27 @@ $ID_LENGTH=3;               //length of the random file ID
 $STORE_PATH="files/";       //directory to store uploaded files in
 $LOG_PATH=null;             //path to log uploads + resulting links to
 $DOWNLOAD_PATH="%s";        //the path part of the download url. %s = placeholder for filename
-$HTTP_PROTO="https";        //protocol to use in links
+$SITE_URL=site_url();
 $MAX_EXT_LEN=7;             //max. length for file extensions
 $EXTERNAL_HOOK=null;
 $AUTO_FILE_EXT=false;
 
 $ADMIN_EMAIL="admin@example.com";  //address for inquiries
 
+
+function site_url()
+{
+    if (isset($_SERVER['HTTP_HOST']))
+    {
+        $url = 'http';
+        if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        {
+            $url .= 's';
+        }  
+        $url .= '://' . $_SERVER['HTTP_HOST'] . '/';
+        return $url;
+    }
+}
 
 // generate a random string of characters with given length
 function rnd_str($len)
@@ -97,7 +111,7 @@ function store_file($name, $tmpfile, $formatted = false)
 {
     global $STORE_PATH;
     global $ID_LENGTH;
-    global $HTTP_PROTO;
+    global $SITE_URL;
     global $DOWNLOAD_PATH;
     global $MAX_FILESIZE;
     global $EXTERNAL_HOOK;
@@ -171,10 +185,8 @@ function store_file($name, $tmpfile, $formatted = false)
     }
 
     //print the download link of the file
-    $url = sprintf('%s://%s/'.$DOWNLOAD_PATH,
-                    $HTTP_PROTO,
-                    $_SERVER["HTTP_HOST"], 
-                    $basename);
+    $url = sprintf($SITE_URL.'%s', $basename);
+
     if ($formatted)
     {
         printf('<pre>Access your file here: <a href="%s">%s</a></pre>', $url, $url);
@@ -255,7 +267,7 @@ function purge_files()
 // send a ShareX custom uploader config as .json
 function send_sharex_config()
 {
-    global $HTTP_PROTO;
+    global $SITE_URL;
     $host = $_SERVER["HTTP_HOST"];
     $filename =  $host.".sxcu";
     $content = <<<EOT
@@ -263,7 +275,7 @@ function send_sharex_config()
   "Name": "$host",
   "DestinationType": "ImageUploader, FileUploader",
   "RequestType": "POST",
-  "RequestURL": "$HTTP_PROTO://$host/",
+  "RequestURL": "$SITE_URL",
   "FileFormName": "file",
   "ResponseType": "Text"
 }
@@ -277,14 +289,14 @@ EOT;
 // send a Hupl uploader config as .hupl (which is just JSON)
 function send_hupl_config()
 {
-    global $HTTP_PROTO;
+    global $SITE_URL;
     $host = $_SERVER["HTTP_HOST"];
     $filename =  $host.".hupl";
     $content = <<<EOT
 {
   "name": "$host",
   "type": "http",
-  "targetUrl": "$HTTP_PROTO://$host/",
+  "targetUrl": "$SITE_URL",
   "fileParam": "file"
 }
 EOT;
@@ -299,15 +311,14 @@ EOT;
 function print_index()
 {
     global $ADMIN_EMAIL;
-    global $HTTP_PROTO;
+    global $SITE_URL;
     global $MAX_FILEAGE;
     global $MAX_FILESIZE;
     global $MIN_FILEAGE;
     global $DECAY_EXP;
 
-    $url = $HTTP_PROTO."://".$_SERVER["HTTP_HOST"].$_SERVER['REQUEST_URI'];
-    $sharex_url = $url."?sharex";
-    $hupl_url = $url."?hupl";
+    $sharex_url = $SITE_URL."?sharex";
+    $hupl_url = $SITE_URL."?hupl";
 
 echo <<<EOT
 <!DOCTYPE html>
@@ -321,10 +332,10 @@ echo <<<EOT
 <pre>
  === How To Upload ===
 You can upload files to this site via a simple HTTP POST, e.g. using curl:
-curl -F "file=@/path/to/your/file.jpg" $url
+curl -F "file=@/path/to/your/file.jpg" $SITE_URL
 
 Or if you want to pipe to curl *and* have a file extension, add a "filename":
-echo "hello" | curl -F "file=@-;filename=.txt" $url
+echo "hello" | curl -F "file=@-;filename=.txt" $SITE_URL
 
 On Windows, you can use <a href="https://getsharex.com/">ShareX</a> and import <a href="$sharex_url">this</a> custom uploader.
 On Android, you can use an app called <a href="https://github.com/Rouji/Hupl">Hupl</a> with <a href="$hupl_url">this</a> uploader.
