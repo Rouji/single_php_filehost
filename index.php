@@ -19,16 +19,8 @@ class CONFIG
 
     public static function SITE_URL()
     {
-        if (isset($_SERVER['HTTP_HOST']))
-        {
-            $url = 'http';
-            if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-            {
-                $url .= 's';
-            }
-            $url .= '://' . $_SERVER['HTTP_HOST'] . '/';
-            return $url;
-        }
+        $proto = $_SERVER['HTTPS'] ?? true ? 'http' : 'https';
+        return "$proto://{$_SERVER['HTTP_HOST']}/";
     }
 };
 
