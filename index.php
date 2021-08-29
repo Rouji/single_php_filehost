@@ -248,12 +248,12 @@ function purge_files()
 // send a ShareX custom uploader config as .json
 function send_sharex_config()
 {
-    $host = $_SERVER["HTTP_HOST"];
+    $name = $_SERVER["SERVER_NAME"];
     $site_url = CONFIG::SITE_URL();
-    $filename =  $host.".sxcu";
+    $filename =  $name.".sxcu";
     $content = <<<EOT
 {
-  "Name": "$host",
+  "Name": "$name",
   "DestinationType": "ImageUploader, FileUploader",
   "RequestType": "POST",
   "RequestURL": "$site_url",
@@ -270,12 +270,12 @@ EOT;
 // send a Hupl uploader config as .hupl (which is just JSON)
 function send_hupl_config()
 {
-    $host = $_SERVER["HTTP_HOST"];
+    $name = $_SERVER["SERVER_NAME"];
     $site_url = CONFIG::SITE_URL();
-    $filename =  $host.".hupl";
+    $filename =  $name.".hupl";
     $content = <<<EOT
 {
-  "name": "$host",
+  "name": "$name",
   "type": "http",
   "targetUrl": "$site_url",
   "fileParam": "file"
