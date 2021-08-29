@@ -8,14 +8,14 @@ class CONFIG
 
     const UPLOAD_TIMEOUT=5*60; //max. time an upload can take before it times out
     const ID_LENGTH=3; //length of the random file ID
-    const STORE_PATH="files/"; //directory to store uploaded files in
+    const STORE_PATH='files/'; //directory to store uploaded files in
     const LOG_PATH=null; //path to log uploads + resulting links to
-    const DOWNLOAD_PATH="%s"; //the path part of the download url. %s = placeholder for filename
+    const DOWNLOAD_PATH='%s'; //the path part of the download url. %s = placeholder for filename
     const MAX_EXT_LEN=7; //max. length for file extensions
     const EXTERNAL_HOOK=null;
     const AUTO_FILE_EXT=false;
 
-    const ADMIN_EMAIL="admin@example.com";  //address for inquiries
+    const ADMIN_EMAIL='admin@example.com';  //address for inquiries
 
     public static function SITE_URL()
     {
@@ -53,14 +53,13 @@ function check_config()
     {
         $ini_val = intval(ini_get($ini_name));
         if ($ini_val < $var_val)
-            printf("<pre>Warning: php.ini: %s (%s) set lower than %s (%s)\n</pre>",
-                   $ini_name, $ini_val, $var_name, $var_val);
+            print("<pre>Warning: php.ini: $ini_name ($ini_val) set lower than $var_name ($var_val)\n</pre>");
     };
 
-    $warn_config_value('upload_max_filesize', "MAX_FILESIZE", CONFIG::MAX_FILESIZE);
-    $warn_config_value('post_max_size', "MAX_FILESIZE", CONFIG::MAX_FILESIZE);
-    $warn_config_value('max_input_time', "UPLOAD_TIMEOUT", CONFIG::UPLOAD_TIMEOUT);
-    $warn_config_value('max_execution_time', "UPLOAD_TIMEOUT", CONFIG::UPLOAD_TIMEOUT);
+    $warn_config_value('upload_max_filesize', 'MAX_FILESIZE', CONFIG::MAX_FILESIZE);
+    $warn_config_value('post_max_size', 'MAX_FILESIZE', CONFIG::MAX_FILESIZE);
+    $warn_config_value('max_input_time', 'UPLOAD_TIMEOUT', CONFIG::UPLOAD_TIMEOUT);
+    $warn_config_value('max_execution_time', 'UPLOAD_TIMEOUT', CONFIG::UPLOAD_TIMEOUT);
 }
 
 //extract extension from a path (does not include the dot)
@@ -81,21 +80,21 @@ function ext_by_finfo($path)
     $finfo = finfo_open(FILEINFO_EXTENSION);
     $finfo_ext = finfo_file($finfo, $path);
     finfo_close($finfo);
-    if ($finfo_ext != "???")
+    if ($finfo_ext != '???')
     {
-        return explode("/", $finfo_ext, 2)[0];
+        return explode('/', $finfo_ext, 2)[0];
     }
     else
     {
         $finfo = finfo_open();
         $finfo_info = finfo_file($finfo, $path);
         finfo_close($finfo);
-        if (strstr($finfo_info, "text") !== false)
+        if (strstr($finfo_info, 'text') !== false)
         {
-            return "txt";
+            return 'txt';
         }
     }
-    return "";
+    return '';
 }
 
 // store an uploaded file, given its name and temporary path (e.g. values straight out of $_FILES)
@@ -116,14 +115,14 @@ function store_file($name, $tmpfile, $formatted = false)
     $size = filesize($tmpfile);
     if ($size > CONFIG::MAX_FILESIZE * 1024 * 1024)
     {
-        header("HTTP/1.0 413 Payload Too Large");
-        printf("Error 413: Max File Size (%d MiB) Exceeded\n", CONFIG::MAX_FILESIZE);
+        header('HTTP/1.0 413 Payload Too Large');
+        print("Error 413: Max File Size ({CONFIG::MAX_FILESIZE} MiB) Exceeded\n");
         return;
     }
     if ($size == 0)
     {
-        header("HTTP/1.0 400 Bad Request");
-        print("Error 400: Uploaded file is empty\n");
+        header('HTTP/1.0 400 Bad Request');
+        print('Error 400: Uploaded file is empty\n');
         return;
     }
 
@@ -151,22 +150,22 @@ function store_file($name, $tmpfile, $formatted = false)
     if (!$res)
     {
         //TODO: proper error handling?
-        header("HTTP/1.0 520 Unknown Error");
+        header('HTTP/1.0 520 Unknown Error');
         return;
     }
     
     if (CONFIG::EXTERNAL_HOOK !== null)
     {
-        putenv("REMOTE_ADDR=".$_SERVER['REMOTE_ADDR']);
-        putenv("ORIGINAL_NAME=".$name);
-        putenv("STORED_FILE=".$target_file);
+        putenv('REMOTE_ADDR='.$_SERVER['REMOTE_ADDR']);
+        putenv('ORIGINAL_NAME='.$name);
+        putenv('STORED_FILE='.$target_file);
         $ret = -1;
         $out = exec(CONFIG::EXTERNAL_HOOK, $_ = null, $ret);
         if ($out !== false && $ret !== 0)
         {
             unlink($target_file);
-            header("HTTP/1.0 400 Bad Request");
-            print("Error: ".$out."\n");
+            header('HTTP/1.0 400 Bad Request');
+            print("Error: $out\n");
             return;
         }
     }
@@ -176,11 +175,11 @@ function store_file($name, $tmpfile, $formatted = false)
 
     if ($formatted)
     {
-        printf('<pre>Access your file here: <a href="%s">%s</a></pre>', $url, $url);
+        print("<pre>Access your file here: <a href=\"$url\">$url</a></pre>");
     }
     else
     {
-        printf($url."\n");
+        print("$url\n");
     }
 
     // log uploader's IP, original filename, etc.
@@ -188,13 +187,13 @@ function store_file($name, $tmpfile, $formatted = false)
     {
         file_put_contents(
             CONFIG::LOG_PATH,
-            implode("\t", array(
+            implode('\t', array(
                 date('c'),
                 $_SERVER['REMOTE_ADDR'],
                 filesize($tmpfile),
                 escapeshellarg($name),
                 $basename
-            )) . "\n",
+            )) . '\n',
             FILE_APPEND
         );
     }
@@ -237,20 +236,20 @@ function purge_files()
         {
             unlink($file);
 
-            printf("deleted \"%s\", %d MiB, %d days old\n", $file, $file_size, $file_age);
+            print("deleted $file, $file_size MiB, $file_age days old\n");
             $num_del += 1;
             $total_size += $file_size;
         }
     }
-    printf("Deleted %d files totalling %d MiB\n", $num_del, $total_size);
+    print("Deleted $num_del files totalling $total_size MiB\n");
 }
 
 // send a ShareX custom uploader config as .json
 function send_sharex_config()
 {
-    $name = $_SERVER["SERVER_NAME"];
+    $name = $_SERVER['SERVER_NAME'];
     $site_url = CONFIG::SITE_URL();
-    $filename =  $name.".sxcu";
+    $filename =  $name.'.sxcu';
     $content = <<<EOT
 {
   "Name": "$name",
@@ -261,18 +260,18 @@ function send_sharex_config()
   "ResponseType": "Text"
 }
 EOT;
-    header("Content-type: application/octet-stream");
-    header('Content-Disposition: attachment; filename="'.$filename.'"');
-    header("Content-Length: ".strlen($content));
+    header('Content-type: application/octet-stream');
+    header("Content-Disposition: attachment; filename=\"$filename\"");
+    header('Content-Length: '.strlen($content));
     print($content);
 }
 
 // send a Hupl uploader config as .hupl (which is just JSON)
 function send_hupl_config()
 {
-    $name = $_SERVER["SERVER_NAME"];
+    $name = $_SERVER['SERVER_NAME'];
     $site_url = CONFIG::SITE_URL();
-    $filename =  $name.".hupl";
+    $filename =  $name.'.hupl';
     $content = <<<EOT
 {
   "name": "$name",
@@ -281,9 +280,9 @@ function send_hupl_config()
   "fileParam": "file"
 }
 EOT;
-    header("Content-type: application/octet-stream");
-    header('Content-Disposition: attachment; filename="'.$filename.'"');
-    header("Content-Length: ".strlen($content));
+    header('Content-type: application/octet-stream');
+    header("Content-Disposition: attachment; filename=\"$filename.\"");
+    header('Content-Length: '.strlen($content));
     print($content);
 }
 
@@ -292,8 +291,8 @@ EOT;
 function print_index()
 {
     $site_url = CONFIG::SITE_URL();
-    $sharex_url = $site_url."?sharex";
-    $hupl_url = $site_url."?hupl";
+    $sharex_url = $site_url.'?sharex';
+    $hupl_url = $site_url.'?hupl';
     $decay = CONFIG::DECAY_EXP;
     $min_age = CONFIG::MIN_FILEAGE;
     $max_size = CONFIG::MAX_FILESIZE;
@@ -364,14 +363,14 @@ EOT;
 
 
 // decide what to do, based on POST parameters etc.
-if (isset($_FILES["file"]["name"]) &&
-    isset($_FILES["file"]["tmp_name"]) &&
-    is_uploaded_file($_FILES["file"]["tmp_name"]))
+if (isset($_FILES['file']['name']) &&
+    isset($_FILES['file']['tmp_name']) &&
+    is_uploaded_file($_FILES['file']['tmp_name']))
 {
     //file was uploaded, store it
-    $formatted = isset($_GET["formatted"]) || isset($_POST["formatted"]);
-    store_file($_FILES["file"]["name"],
-              $_FILES["file"]["tmp_name"],
+    $formatted = isset($_GET['formatted']) || isset($_POST['formatted']);
+    store_file($_FILES['file']['name'],
+              $_FILES['file']['tmp_name'],
               $formatted);
 }
 else if (isset($_GET['sharex']))
