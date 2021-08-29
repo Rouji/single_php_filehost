@@ -236,13 +236,20 @@ function purge_files() : void
     print("Deleted $num_del files totalling $total_size MiB\n");
 }
 
+function send_text_file(string $filename, string $content) : void
+{
+    header('Content-type: application/octet-stream');
+    header("Content-Disposition: attachment; filename=\"$filename\"");
+    header('Content-Length: '.strlen($content));
+    print($content);
+}
+
 // send a ShareX custom uploader config as .json
 function send_sharex_config() : void
 {
     $name = $_SERVER['SERVER_NAME'];
     $site_url = CONFIG::SITE_URL();
-    $filename =  $name.'.sxcu';
-    $content = <<<EOT
+    send_text_file($name.'.sxcu', <<<EOT
 {
   "Name": "$name",
   "DestinationType": "ImageUploader, FileUploader",
@@ -251,11 +258,7 @@ function send_sharex_config() : void
   "FileFormName": "file",
   "ResponseType": "Text"
 }
-EOT;
-    header('Content-type: application/octet-stream');
-    header("Content-Disposition: attachment; filename=\"$filename\"");
-    header('Content-Length: '.strlen($content));
-    print($content);
+EOT);
 }
 
 // send a Hupl uploader config as .hupl (which is just JSON)
@@ -263,19 +266,14 @@ function send_hupl_config() : void
 {
     $name = $_SERVER['SERVER_NAME'];
     $site_url = CONFIG::SITE_URL();
-    $filename =  $name.'.hupl';
-    $content = <<<EOT
+    send_text_file($name.'.hupl', <<<EOT
 {
   "name": "$name",
   "type": "http",
   "targetUrl": "$site_url",
   "fileParam": "file"
 }
-EOT;
-    header('Content-type: application/octet-stream');
-    header("Content-Disposition: attachment; filename=\"$filename\"");
-    header('Content-Length: '.strlen($content));
-    print($content);
+EOT);
 }
 
 // print a plaintext info page, explaining what this script does and how to
