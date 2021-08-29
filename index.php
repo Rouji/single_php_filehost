@@ -1,35 +1,37 @@
 <?php
-$MAX_FILESIZE=512;         //max. filesize in MiB
-$MAX_FILEAGE=180;           //max. age of files in days
-$MIN_FILEAGE=31;            //min. age of files in days
-$DECAY_EXP=2;               //high values penalise larger files more
-
-$UPLOAD_TIMEOUT=5*60;       //max. time an upload can take before it times out
-$ID_LENGTH=3;               //length of the random file ID
-$STORE_PATH="files/";       //directory to store uploaded files in
-$LOG_PATH=null;             //path to log uploads + resulting links to
-$DOWNLOAD_PATH="%s";        //the path part of the download url. %s = placeholder for filename
-$SITE_URL=site_url();
-$MAX_EXT_LEN=7;             //max. length for file extensions
-$EXTERNAL_HOOK=null;
-$AUTO_FILE_EXT=false;
-
-$ADMIN_EMAIL="admin@example.com";  //address for inquiries
-
-
-function site_url()
+class CONFIG
 {
-    if (isset($_SERVER['HTTP_HOST']))
+    const MAX_FILESIZE=512; //max. filesize in MiB
+    const MAX_FILEAGE=180; //max. age of files in days
+    const MIN_FILEAGE=31; //min. age of files in days
+    const DECAY_EXP=2; //high values penalise larger files more
+
+    const UPLOAD_TIMEOUT=5*60; //max. time an upload can take before it times out
+    const ID_LENGTH=3; //length of the random file ID
+    const STORE_PATH="files/"; //directory to store uploaded files in
+    const LOG_PATH=null; //path to log uploads + resulting links to
+    const DOWNLOAD_PATH="%s"; //the path part of the download url. %s = placeholder for filename
+    const MAX_EXT_LEN=7; //max. length for file extensions
+    const EXTERNAL_HOOK=null;
+    const AUTO_FILE_EXT=false;
+
+    const ADMIN_EMAIL="admin@example.com";  //address for inquiries
+
+    public static function SITE_URL()
     {
-        $url = 'http';
-        if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        if (isset($_SERVER['HTTP_HOST']))
         {
-            $url .= 's';
-        }  
-        $url .= '://' . $_SERVER['HTTP_HOST'] . '/';
-        return $url;
+            $url = 'http';
+            if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+            {
+                $url .= 's';
+            }
+            $url .= '://' . $_SERVER['HTTP_HOST'] . '/';
+            return $url;
+        }
     }
-}
+};
+
 
 // generate a random string of characters with given length
 function rnd_str($len)
@@ -47,9 +49,6 @@ function rnd_str($len)
 // check php.ini settings and print warnings if anything's not configured properly
 function check_config()
 {
-    global $MAX_FILESIZE;
-    global $UPLOAD_TIMEOUT;
-
     $warn_config_value = function($ini_name, $var_name, $var_val)
     {
         $ini_val = intval(ini_get($ini_name));
@@ -58,10 +57,10 @@ function check_config()
                    $ini_name, $ini_val, $var_name, $var_val);
     };
 
-    $warn_config_value('upload_max_filesize', "MAX_FILESIZE", $MAX_FILESIZE);
-    $warn_config_value('post_max_size', "MAX_FILESIZE", $MAX_FILESIZE);
-    $warn_config_value('max_input_time', "UPLOAD_TIMEOUT", $UPLOAD_TIMEOUT);
-    $warn_config_value('max_execution_time', "UPLOAD_TIMEOUT", $UPLOAD_TIMEOUT);
+    $warn_config_value('upload_max_filesize', "MAX_FILESIZE", CONFIG::MAX_FILESIZE);
+    $warn_config_value('post_max_size', "MAX_FILESIZE", CONFIG::MAX_FILESIZE);
+    $warn_config_value('max_input_time', "UPLOAD_TIMEOUT", CONFIG::UPLOAD_TIMEOUT);
+    $warn_config_value('max_execution_time', "UPLOAD_TIMEOUT", CONFIG::UPLOAD_TIMEOUT);
 }
 
 //extract extension from a path (does not include the dot)
@@ -107,28 +106,18 @@ function ext_by_finfo($path)
 // $formatted: set to true to display formatted message instead of bare link
 function store_file($name, $tmpfile, $formatted = false)
 {
-    global $STORE_PATH;
-    global $ID_LENGTH;
-    global $SITE_URL;
-    global $DOWNLOAD_PATH;
-    global $MAX_FILESIZE;
-    global $EXTERNAL_HOOK;
-    global $LOG_PATH;
-    global $MAX_EXT_LEN;
-    global $AUTO_FILE_EXT;
-
     //create folder, if it doesn't exist
-    if (!file_exists($STORE_PATH))
+    if (!file_exists(CONFIG::STORE_PATH))
     {
-        mkdir($STORE_PATH, 0750, true); //TODO: error handling
+        mkdir(CONFIG::STORE_PATH, 0750, true); //TODO: error handling
     }
 
     //check file size
     $size = filesize($tmpfile);
-    if ($size > $MAX_FILESIZE * 1024 * 1024)
+    if ($size > CONFIG::MAX_FILESIZE * 1024 * 1024)
     {
         header("HTTP/1.0 413 Payload Too Large");
-        printf("Error 413: Max File Size (%d MiB) Exceeded\n", $MAX_FILESIZE);
+        printf("Error 413: Max File Size (%d MiB) Exceeded\n", CONFIG::MAX_FILESIZE);
         return;
     }
     if ($size == 0)
@@ -139,19 +128,19 @@ function store_file($name, $tmpfile, $formatted = false)
     }
 
     $ext = ext_by_path($name);
-    if (empty($ext) && $AUTO_FILE_EXT)
+    if (empty($ext) && CONFIG::AUTO_FILE_EXT)
     {
         $ext = ext_by_finfo($tmpfile);
     }
-    $ext = substr($ext, 0, $MAX_EXT_LEN);
+    $ext = substr($ext, 0, CONFIG::MAX_EXT_LEN);
     $tries_per_len=3; //try random names a few times before upping the length
-    for ($len = $ID_LENGTH; ; ++$len)
+    for ($len = CONFIG::ID_LENGTH; ; ++$len)
     {
         for ($n=0; $n<=$tries_per_len; ++$n)
         {
             $id = rnd_str($len);
             $basename = $id . (empty($ext) ? '' : '.' . $ext);
-            $target_file = $STORE_PATH . $basename;
+            $target_file = CONFIG::STORE_PATH . $basename;
 
             if (!file_exists($target_file))
                 break 2;
@@ -166,13 +155,13 @@ function store_file($name, $tmpfile, $formatted = false)
         return;
     }
     
-    if ($EXTERNAL_HOOK !== null)
+    if (CONFIG::EXTERNAL_HOOK !== null)
     {
         putenv("REMOTE_ADDR=".$_SERVER['REMOTE_ADDR']);
         putenv("ORIGINAL_NAME=".$name);
         putenv("STORED_FILE=".$target_file);
         $ret = -1;
-        $out = exec($EXTERNAL_HOOK, $_ = null, $ret);
+        $out = exec(CONFIG::EXTERNAL_HOOK, $_ = null, $ret);
         if ($out !== false && $ret !== 0)
         {
             unlink($target_file);
@@ -183,7 +172,7 @@ function store_file($name, $tmpfile, $formatted = false)
     }
 
     //print the download link of the file
-    $url = sprintf($SITE_URL.$DOWNLOAD_PATH, $basename);
+    $url = sprintf(CONFIG::SITE_URL().CONFIG::DOWNLOAD_PATH, $basename);
 
     if ($formatted)
     {
@@ -195,10 +184,10 @@ function store_file($name, $tmpfile, $formatted = false)
     }
 
     // log uploader's IP, original filename, etc.
-    if ($LOG_PATH)
+    if (CONFIG::LOG_PATH)
     {
         file_put_contents(
-            $LOG_PATH,
+            CONFIG::LOG_PATH,
             implode("\t", array(
                 date('c'),
                 $_SERVER['REMOTE_ADDR'],
@@ -214,17 +203,11 @@ function store_file($name, $tmpfile, $formatted = false)
 // purge all files older than their retention period allows.
 function purge_files()
 {
-    global $STORE_PATH;
-    global $MAX_FILEAGE;
-    global $MAX_FILESIZE;
-    global $MIN_FILEAGE;
-    global $DECAY_EXP;
-
     $num_del = 0;    //number of deleted files
     $total_size = 0; //total size of deleted files
 
     //for each stored file
-    foreach (scandir($STORE_PATH) as $file)
+    foreach (scandir(CONFIG::STORE_PATH) as $file)
     {
         //skip virtual . and .. files
         if ($file === '.' ||
@@ -233,21 +216,21 @@ function purge_files()
             continue;
         }
 
-        $file = $STORE_PATH . $file;
+        $file = CONFIG::STORE_PATH . $file;
 
         $file_size = filesize($file) / (1024*1024); //size in MiB
         $file_age = (time()-filemtime($file)) / (60*60*24); //age in days
 
         //keep all files below the min age
-        if ($file_age < $MIN_FILEAGE)
+        if ($file_age < CONFIG::MIN_FILEAGE)
         {
             continue;
         }
 
         //calculate the maximum age in days for this file
-        $file_max_age = $MIN_FILEAGE +
-                      ($MAX_FILEAGE - $MIN_FILEAGE) *
-                      pow(1-($file_size/$MAX_FILESIZE),$DECAY_EXP);
+        $file_max_age = CONFIG::MIN_FILEAGE +
+                        (CONFIG::MAX_FILEAGE - CONFIG::MIN_FILEAGE) *
+                        pow(1 - ($file_size / CONFIG::MAX_FILESIZE), CONFIG::DECAY_EXP);
 
         //delete if older
         if ($file_age > $file_max_age)
@@ -265,15 +248,15 @@ function purge_files()
 // send a ShareX custom uploader config as .json
 function send_sharex_config()
 {
-    global $SITE_URL;
     $host = $_SERVER["HTTP_HOST"];
+    $site_url = CONFIG::SITE_URL();
     $filename =  $host.".sxcu";
     $content = <<<EOT
 {
   "Name": "$host",
   "DestinationType": "ImageUploader, FileUploader",
   "RequestType": "POST",
-  "RequestURL": "$SITE_URL",
+  "RequestURL": "$site_url",
   "FileFormName": "file",
   "ResponseType": "Text"
 }
@@ -287,14 +270,14 @@ EOT;
 // send a Hupl uploader config as .hupl (which is just JSON)
 function send_hupl_config()
 {
-    global $SITE_URL;
     $host = $_SERVER["HTTP_HOST"];
+    $site_url = CONFIG::SITE_URL();
     $filename =  $host.".hupl";
     $content = <<<EOT
 {
   "name": "$host",
   "type": "http",
-  "targetUrl": "$SITE_URL",
+  "targetUrl": "$site_url",
   "fileParam": "file"
 }
 EOT;
@@ -308,15 +291,15 @@ EOT;
 // use it, how to upload, etc.
 function print_index()
 {
-    global $ADMIN_EMAIL;
-    global $SITE_URL;
-    global $MAX_FILEAGE;
-    global $MAX_FILESIZE;
-    global $MIN_FILEAGE;
-    global $DECAY_EXP;
+    $site_url = CONFIG::SITE_URL();
+    $sharex_url = $site_url."?sharex";
+    $hupl_url = $site_url."?hupl";
+    $decay = CONFIG::DECAY_EXP;
+    $min_age = CONFIG::MIN_FILEAGE;
+    $max_size = CONFIG::MAX_FILESIZE;
+    $max_age = CONFIG::MAX_FILEAGE;
+    $mail = CONFIG::ADMIN_EMAIL;
 
-    $sharex_url = $SITE_URL."?sharex";
-    $hupl_url = $SITE_URL."?hupl";
 
 echo <<<EOT
 <!DOCTYPE html>
@@ -330,10 +313,10 @@ echo <<<EOT
 <pre>
  === How To Upload ===
 You can upload files to this site via a simple HTTP POST, e.g. using curl:
-curl -F "file=@/path/to/your/file.jpg" $SITE_URL
+curl -F "file=@/path/to/your/file.jpg" $site_url
 
 Or if you want to pipe to curl *and* have a file extension, add a "filename":
-echo "hello" | curl -F "file=@-;filename=.txt" $SITE_URL
+echo "hello" | curl -F "file=@-;filename=.txt" $site_url
 
 On Windows, you can use <a href="https://getsharex.com/">ShareX</a> and import <a href="$sharex_url">this</a> custom uploader.
 On Android, you can use an app called <a href="https://github.com/Rouji/Hupl">Hupl</a> with <a href="$hupl_url">this</a> uploader.
@@ -352,17 +335,17 @@ selection input.)
 
 
  === File Sizes etc. ===
-The maximum allowed file size is $MAX_FILESIZE MiB.
+The maximum allowed file size is $max_size MiB.
 
-Files are kept for a minimum of $MIN_FILEAGE, and a maximum of $MAX_FILEAGE Days.
+Files are kept for a minimum of $min_age, and a maximum of $max_age Days.
 
-How long a file is kept, depends on its size. Larger files are deleted earlier 
+How long a file is kept depends on its size. Larger files are deleted earlier 
 than small ones. This relation is non-linear and skewed in favour of small 
 files.
 
 The exact formula for determining the maximum age for a file is:
 
-MIN_AGE + (MAX_AGE - MIN_AGE) * (1-(FILE_SIZE/MAX_SIZE))^$DECAY_EXP
+MIN_AGE + (MAX_AGE - MIN_AGE) * (1-(FILE_SIZE/MAX_SIZE))^$decay
 
 
  === Source ===
@@ -372,7 +355,7 @@ The PHP script used to provide this service is open source and available on
 
  === Contact ===
 If you want to report abuse of this service, or have any other inquiries, 
-please write an email to $ADMIN_EMAIL
+please write an email to $mail
 </pre>
 </body>
 </html>
