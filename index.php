@@ -273,7 +273,7 @@ function send_hupl_config()
 }
 EOT;
     header('Content-type: application/octet-stream');
-    header("Content-Disposition: attachment; filename=\"$filename.\"");
+    header("Content-Disposition: attachment; filename=\"$filename\"");
     header('Content-Length: '.strlen($content));
     print($content);
 }
