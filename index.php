@@ -1,21 +1,21 @@
 <?php
 class CONFIG
 {
-    const MAX_FILESIZE=512; //max. filesize in MiB
-    const MAX_FILEAGE=180; //max. age of files in days
-    const MIN_FILEAGE=31; //min. age of files in days
-    const DECAY_EXP=2; //high values penalise larger files more
+    const MAX_FILESIZE = 512; //max. filesize in MiB
+    const MAX_FILEAGE = 180; //max. age of files in days
+    const MIN_FILEAGE = 31; //min. age of files in days
+    const DECAY_EXP = 2; //high values penalise larger files more
 
-    const UPLOAD_TIMEOUT=5*60; //max. time an upload can take before it times out
-    const ID_LENGTH=3; //length of the random file ID
-    const STORE_PATH='files/'; //directory to store uploaded files in
-    const LOG_PATH=null; //path to log uploads + resulting links to
-    const DOWNLOAD_PATH='%s'; //the path part of the download url. %s = placeholder for filename
-    const MAX_EXT_LEN=7; //max. length for file extensions
-    const EXTERNAL_HOOK=null;
-    const AUTO_FILE_EXT=false;
+    const UPLOAD_TIMEOUT = 5*60; //max. time an upload can take before it times out
+    const ID_LENGTH = 3; //length of the random file ID
+    const STORE_PATH = 'files/'; //directory to store uploaded files in
+    const LOG_PATH = null; //path to log uploads + resulting links to
+    const DOWNLOAD_PATH = '%s'; //the path part of the download url. %s = placeholder for filename
+    const MAX_EXT_LEN = 7; //max. length for file extensions
+    const EXTERNAL_HOOK = null; //external program to call for each upload
+    const AUTO_FILE_EXT = false; //automatically try to detect file extension for files that have none
 
-    const ADMIN_EMAIL='admin@example.com';  //address for inquiries
+    const ADMIN_EMAIL = 'admin@example.com';  //address for inquiries
 
     public static function SITE_URL()
     {
