@@ -360,7 +360,7 @@ if (isset($_FILES['file']['name']) &&
     is_uploaded_file($_FILES['file']['tmp_name']))
 {
     //file was uploaded, store it
-    $formatted = isset($_GET['formatted']) || isset($_POST['formatted']);
+    $formatted = isset($_REQUEST['formatted']);
     store_file($_FILES['file']['name'],
               $_FILES['file']['tmp_name'],
               $formatted);
@@ -373,7 +373,7 @@ else if (isset($_GET['hupl']))
 {
     send_hupl_config();
 }
-else if (isset($argv[1]) && $argv[1] === 'purge')
+else if ($argv[1] ?? null === 'purge')
 {
     purge_files();
 }
