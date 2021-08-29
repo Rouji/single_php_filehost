@@ -17,7 +17,7 @@ class CONFIG
 
     const ADMIN_EMAIL = 'admin@example.com';  //address for inquiries
 
-    public static function SITE_URL()
+    public static function SITE_URL() : string
     {
         $proto = $_SERVER['HTTPS'] ?? true ? 'http' : 'https';
         return "$proto://{$_SERVER['HTTP_HOST']}/";
@@ -26,7 +26,7 @@ class CONFIG
 
 
 // generate a random string of characters with given length
-function rnd_str($len)
+function rnd_str(int $len) : string
 {
     $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
     $max_idx = strlen($chars) - 1;
@@ -39,7 +39,7 @@ function rnd_str($len)
 }
 
 // check php.ini settings and print warnings if anything's not configured properly
-function check_config()
+function check_config() : void
 {
     $warn_config_value = function($ini_name, $var_name, $var_val)
     {
@@ -55,7 +55,7 @@ function check_config()
 }
 
 //extract extension from a path (does not include the dot)
-function ext_by_path($path)
+function ext_by_path(string $path) : string
 {
     $ext = pathinfo($path, PATHINFO_EXTENSION);
     //special handling of .tar.* archives
@@ -67,7 +67,7 @@ function ext_by_path($path)
     return $ext;
 }
 
-function ext_by_finfo($path)
+function ext_by_finfo(string $path) : string
 {
     $finfo = finfo_open(FILEINFO_EXTENSION);
     $finfo_ext = finfo_file($finfo, $path);
@@ -95,7 +95,7 @@ function ext_by_finfo($path)
 // $name: original filename
 // $tmpfile: temporary path of uploaded file
 // $formatted: set to true to display formatted message instead of bare link
-function store_file($name, $tmpfile, $formatted = false)
+function store_file(string $name, string $tmpfile, bool $formatted = false) : void
 {
     //create folder, if it doesn't exist
     if (!file_exists(CONFIG::STORE_PATH))
@@ -192,7 +192,7 @@ function store_file($name, $tmpfile, $formatted = false)
 }
 
 // purge all files older than their retention period allows.
-function purge_files()
+function purge_files() : void
 {
     $num_del = 0;    //number of deleted files
     $total_size = 0; //total size of deleted files
@@ -237,7 +237,7 @@ function purge_files()
 }
 
 // send a ShareX custom uploader config as .json
-function send_sharex_config()
+function send_sharex_config() : void
 {
     $name = $_SERVER['SERVER_NAME'];
     $site_url = CONFIG::SITE_URL();
@@ -259,7 +259,7 @@ EOT;
 }
 
 // send a Hupl uploader config as .hupl (which is just JSON)
-function send_hupl_config()
+function send_hupl_config() : void
 {
     $name = $_SERVER['SERVER_NAME'];
     $site_url = CONFIG::SITE_URL();
@@ -280,7 +280,7 @@ EOT;
 
 // print a plaintext info page, explaining what this script does and how to
 // use it, how to upload, etc.
-function print_index()
+function print_index() : void
 {
     $site_url = CONFIG::SITE_URL();
     $sharex_url = $site_url.'?sharex';
