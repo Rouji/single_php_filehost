@@ -183,7 +183,7 @@ function store_file($name, $tmpfile, $formatted = false)
     }
 
     //print the download link of the file
-    $url = sprintf($SITE_URL.'%s', $basename);
+    $url = sprintf($SITE_URL.$DOWNLOAD_PATH, $basename);
 
     if ($formatted)
     {
