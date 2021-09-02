@@ -276,6 +276,68 @@ function send_hupl_config() : void
 EOT);
 }
 
+function graph($func, int $width, int $height, int $min_x, int $max_x, int $min_y, int $max_y, int $steps, float $smooth) : string
+{
+    $path = '';
+    $points = array();
+    for ($i = 0; $i<$steps; ++$i)
+    {
+        $x = (($max_x-$min_x)/$steps)*$i;
+        $y = $func($x + $min_x) - $min_y;
+        $points[] = [$x/($max_x-$min_x)*$width, $height - $y/($max_y-$min_y)*$height];
+    }
+    $len = fn($p) => sqrt(pow($p[0],2)+pow($p[1],2));
+    $norm = function($p) use($len) {$l=$len($p); return [$p[0]/$l, $p[1]/$l];};
+    $inv = fn($p) => [-$p[0],-$p[1]];
+    $add = fn($p1, $p2) => [$p1[0]+$p2[0], $p1[1]+$p2[1]];
+    $sub = fn($p1, $p2) => $add($p1, $inv($p2));
+    $mul = fn($p, $n) => [$p[0]*$n, $p[1]*$n];
+    $control_vec = fn($p1, $p2, $l) => $mul($norm($sub($p2,$p1)), $l);
+    $f = fn($n) => number_format($n, 1);
+    $debug = '';
+    for ($i = 0; $i<count($points); ++$i)
+    {
+        $p = $points[$i];
+        if ($i === 0)
+        {
+            $path .= "M $p[0] $p[1] ";
+        }
+        else
+        {
+            $c1 = $add($points[$i-1], $control_vec($points[$i-2] ?? $points[$i-1], $points[$i], $smooth));
+            $c2 = $sub($points[$i], $control_vec($points[$i-1], $points[$i+1] ?? $points[$i], $smooth));
+            $path .= "C {$f($c1[0])} {$f($c1[1])}, {$f($c2[0])} {$f($c2[1])}, {$f($p[0])} {$f($p[1])} ";
+            //$debug .= "<circle cx=\"$p[0]\" cy=\"$p[1]\" r=\"3\" fill=\"black\"/><circle cx=\"$c1[0]\" cy=\"$c1[1]\" r=\"2\" fill=\"green\"/><circle cx=\"$c2[0]\" cy=\"$c2[1]\" r=\"2\" fill=\"red\"/>";
+        }
+    }
+
+    $font_size = 12;
+    $padding = $font_size+2;
+    $text_style = "style=\"font: {$font_size}px monospace;\"";
+    $func_path = "<path d=\"$path\" stroke=\"green\" fill=\"none\" />";
+    $padded_width = $width+$padding; $padded_height = $height+$padding;
+    $mid_x = $padding + $width/2; $mid_y = $height/2;
+    return <<<EOT
+<svg width="$padded_width" height="$padded_height">
+    <g transform="translate($padding,0)">
+        $func_path
+        $debug
+    </g>
+    <line x1="$padding" y1="$height" x2="$width" y2="$height" stroke="black"/>
+    <line x1="$padding" y1="0" x2="$padding" y2="$height" stroke="black"/>
+    <g $text_style transform="translate(0,$height)">
+        <text x="0" y="0" alignment-baseline="hanging">$min_x</text>
+        <text x="$mid_x" y="0" text-anchor="middle" alignment-baseline="hanging">days</text>
+        <text x="$width" y="0" text-anchor="end" alignment-baseline="hanging">$max_x</text>
+    </g>
+    <g $text_style transform="translate($padding,$height) rotate(-90)">
+        <text x="$mid_y" y="0" text-anchor="middle">MiB</text>
+        <text x="$height" y="0" text-anchor="end">$max_y</text>
+    </g>
+</svg>
+EOT;
+}
+
 // print a plaintext info page, explaining what this script does and how to
 // use it, how to upload, etc.
 function print_index() : void
@@ -289,6 +351,7 @@ function print_index() : void
     $max_age = CONFIG::MAX_FILEAGE;
     $mail = CONFIG::ADMIN_EMAIL;
 
+    $g = graph(fn($x) => 50+cos($x/10)*50, 400, 200, 0, 300, 0, 100, 20, 10);
 
 echo <<<EOT
 <!DOCTYPE html>
@@ -320,6 +383,7 @@ selection input.)
 <input type="hidden" name="formatted" value="true" />
 <input type="submit" value="Upload"/>
 </form>
+
 <pre>
 
 
@@ -336,6 +400,7 @@ The exact formula for determining the maximum age for a file is:
 
 MIN_AGE + (MAX_AGE - MIN_AGE) * (1-(FILE_SIZE/MAX_SIZE))^$decay
 
+$g
 
  === Source ===
 The PHP script used to provide this service is open source and available on 
