@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+  app:
+    image: "lightphp"
+    container_name: lightphp
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./files:/var/www/files
+      # OR
+      #- ./www:/var/www
+      #- ./lighttpd:/etc/lighttpd
+      #- ./php7:/etc/php7

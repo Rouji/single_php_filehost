@@ -63,3 +63,18 @@ $file_max_age = $MIN_FILEAGE +
 ```
 ...which is a basic exponential decay curve that favours smaller files, meaning small files are kept longer and really big ones are deleted relatively quickly.  
 **$DECAY_EXP** is one of the configurable globals and basically makes the curve more or less exponential-looking. Set to 1 for a completely linear relationship.  
+
+# Using Docker
+Easy way to deploy services.
+Configuration allows you to start a server for 80 of your host.
+The image is built on Alpine + Lighttpd and a minimal PHP set. Image size 21MB. 
+
+Installation 
+```
+make build
+make start
+```
+To purge the old files, add string  to your crontab string
+```
+0 0 * * * docker exec --user www-data lightphp php index.php purge  > /dev/null
+```
