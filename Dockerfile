@@ -35,6 +35,7 @@ RUN mkdir -p /run/lighttpd/ && \
     chown www-data. /run/lighttpd/
 
 ADD lighttpd.conf /etc/lighttpd/lighttpd.conf
+RUN mkdir -p /var/www/
 ADD index.php /var/www/index.php
 ADD php.ini /etc/php7/php.ini
 
