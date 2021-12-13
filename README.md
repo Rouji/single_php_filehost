@@ -72,9 +72,13 @@ The image is built on Alpine + Lighttpd and a minimal PHP set. Image size 21MB.
 Installation 
 ```
 make build
-make start
+make run
 ```
 To purge the old files, add string  to your crontab string
 ```
 0 0 * * * docker exec --user www-data lightphp php index.php purge  > /dev/null
+```
+Deleting
+```
+make rm
 ```
