@@ -1,18 +1,12 @@
 FROM alpine:latest
 
-RUN apk --update \
-    add lighttpd && \
-    rm -rf /var/cache/apk/*
-
-ADD lighttpd.conf /etc/lighttpd/lighttpd.conf
-RUN adduser www-data -G www-data -H -s /bin/false -D
-
-RUN apk --update add \
+RUN apk --update --no-cache \
+    add lighttpd \
     php \
     php-common \
     php-cgi \
-    php-dom && \
-    rm -rf /var/cache/apk/*
+    php-fileinfo
+    #php-dom \
     #php-iconv \
     #php-json \
     #php-gd \
@@ -31,13 +25,18 @@ RUN apk --update add \
     #php-ldap \
     #php-ctype \
 
+RUN adduser www-data -G www-data -H -s /bin/false -D
+
 RUN mkdir -p /run/lighttpd/ && \
     chown www-data. /run/lighttpd/
+RUN mkdir -p /var/www/
 
 ADD lighttpd.conf /etc/lighttpd/lighttpd.conf
-RUN mkdir -p /var/www/
 ADD index.php /var/www/index.php
-ADD php.ini /etc/php7/php.ini
+RUN sed -i 's/post_max_size[^;]*$/post_max_size = 512M/' /etc/php7/php.ini
+RUN sed -i 's/upload_max_filesize[^;]*$/upload_max_filesize = 512M/' /etc/php7/php.ini
+RUN sed -i 's/max_input_time[^;]*$/max_input_time = 300/' /etc/php7/php.ini
+RUN sed -i 's/max_execution_time[^;]*$/max_execution_time = 300/' /etc/php7/php.ini
 
 EXPOSE 80
 
