@@ -1,10 +1,12 @@
-# Single .php Filehost
-Simple PHP script, mainly for sharing random files with people using curl. (and thus in an easily scriptable way)
+# Single .php File Host
+Minimalistic file host in a single PHP script.
 
-Puts a file sent via POST into a configured directory with a randomised filename but preserving the original file extension and returns a link to it.  
-Actually serving the file to people is left to apache to figure out.
+`curl`-able like any proper file host and pastebin ought to be.  
+i.e. you can upload a file via `curl -F "file=@/path/to/your/file.jpg" https://example.com/`
 
-There's also a mechanism for removing files over a certain age, which can be invoked by calling the script with a commandline argument.
+Uploaded files get randomised names but keep their extensions. That means serving them is easily outsourced to the web server and is not handled by this script. 
+
+There's also a mechanism for removing files over a certain age, which can be invoked by calling the script with a command line argument.
 
 # Config
 All configuration is done using the global variables at the top of **index.php**. Hopefully they're explained well enough in the short comments besides them.
@@ -19,7 +21,6 @@ max_execution_time
 The code responsible for the default info text can be found at the very bottom of index.php, in case you want to reword anything.
 
 ## Apache
-Pretty straight forward, I use something like this:  
 
 ```
 <Directory /path/to/webroot/>
