@@ -41,6 +41,26 @@ Pretty straight forward, I use something like this:
 </Directory>
 ```
 
+## Nginx
+```
+root /path/to/webroot;
+index index.php;
+
+location ~ /(.+)$ {
+    root /path/to/webroot/files;
+}
+
+location = / {
+    include fastcgi_params;
+    fastcgi_param HTTP_PROXY "";
+    fastcgi_intercept_errors On;
+    fastcgi_param SCRIPT_NAME index.php;
+    fastcgi_param SCRIPT_FILENAME /path/to/webroot/index.php;
+    fastcgi_param QUERY_STRING $query_string;
+    fastcgi_pass 127.0.0.1:9000;
+}
+```
+
 # Purging Old Files
 To check for any files that exceed their max age and delete them, you need to call index.php with the argument "purge"  
 ```bash
