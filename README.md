@@ -83,3 +83,17 @@ $file_max_age = $MIN_FILEAGE +
 ```
 ...which is a basic exponential decay curve that favours smaller files, meaning small files are kept longer and really big ones are deleted relatively quickly.  
 **$DECAY_EXP** is one of the configurable globals and basically makes the curve more or less exponential-looking. Set to 1 for a completely linear relationship.  
+
+# Related Things
+- [ssh2p](https://github.com/Rouji/ssh2p) and [nc2p](https://github.com/Rouji/nc2p) for adding the ability to upload via `ssh` and `netcat`.  
+- [Docker container](https://github.com/Rouji/single_php_filehost_docker)
+
+# FAQ
+**Q:** Can you add this or that feature?  
+**A:** This is mostly just a snapshot of what I'm doing on [x0.at](https://x0.at/). But I'm open to suggestions and PRs, as long as they do something useful that can't be done outside of the script itself (e.g. auth could be done in a .htaccess, malware scanning can be done in the `EXTERNAL_HOOK`, ...) and they don't go against the KISS principle.  
+
+**Q:** Why is the index page so ugly? (And PRs regarding styling)  
+**A:** To some degree because of KISS, but also because I'm not trying to make the next super flashy, super popular Megaupload clone. This is more aimed at a minority of nerds with command line fetishes.
+
+**Q:** OMG hosting this without user accounts or logins is so dangerous! Change that now!!1  
+**A:** I've been running x0.at for *years* now and like to think I know what I'm doing. I'll maybe consider changing how I run it, should it become a problem. *But* I also don't see that as a concern to be dealt with inside this script. If you want to run your copy of this with logins, use basic auth on top of it or something.  
