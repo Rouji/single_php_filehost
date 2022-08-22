@@ -20,7 +20,7 @@ class CONFIG
     public static function SITE_URL() : string
     {
         $proto = ($_SERVER['HTTPS'] ?? 'off') == 'on' ? 'https' : 'http';
-        return "$proto://{$_SERVER['HTTP_HOST']}/";
+        return "$proto://{$_SERVER['HTTP_HOST']}{$_SERVER['REQUEST_URI']}";
     }
 };
 
