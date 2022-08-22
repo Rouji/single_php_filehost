@@ -1,0 +1,9 @@
+php_value upload_max_filesize 512
+php_value post_max_size 512
+php_value max_input_time 300
+php_value max_execution_time 300
+
+RewriteEngine On
+RewriteCond "%{ENV:REDIRECT_STATUS}" "^$"
+RewriteRule "^/?$" "index.php" [L,END]
+RewriteRule "^(.+)$" "files/$1" [L,END]
