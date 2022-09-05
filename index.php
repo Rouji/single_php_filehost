@@ -327,6 +327,12 @@ curl -F "file=@/path/to/your/file.jpg" $site_url
 
 Or if you want to pipe to curl *and* have a file extension, add a "filename":
 echo "hello" | curl -F "file=@-;filename=.txt" $site_url
+
+Or if you want to <a href="https://github.com/Rouji/nc2p">upload using netcat</a>:
+echo "hello" | nc x0.at 9999
+
+Or if you want to upload via SSH (<a href="https://github.com/Rouji/ssh2p">yes, really</a>):
+echo "hello" | ssh x0.at
 $length_info
 On Windows, you can use <a href="https://getsharex.com/">ShareX</a> and import <a href="$sharex_url">this</a> custom uploader.
 On Android, you can use an app called <a href="https://github.com/Rouji/Hupl">Hupl</a> with <a href="$hupl_url">this</a> uploader.
@@ -366,6 +372,11 @@ The PHP script used to provide this service is open source and available on
  === Contact ===
 If you want to report abuse of this service, or have any other inquiries, 
 please write an email to $mail
+
+ === Support ===
+<a href="https://paypal.me/hacklandreas">Paypal me a pizza</a>
+Bitcoin me a beverage at <a href="bitcoin:BC1QTTYDK6A9T2H8L2M74J32FEMY84UUW9MD7K3W5U">BC1QTTYDK6A9T2H8L2M74J32FEMY84UUW9MD7K3W5U</a>
+
 </pre>
 </body>
 </html>
