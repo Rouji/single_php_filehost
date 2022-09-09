@@ -179,13 +179,13 @@ function store_file(string $name, string $tmpfile, bool $formatted = false) : vo
     {
         file_put_contents(
             CONFIG::LOG_PATH,
-            implode('\t', array(
+            implode("\t", array(
                 date('c'),
                 $_SERVER['REMOTE_ADDR'],
                 filesize($tmpfile),
                 escapeshellarg($name),
                 $basename
-            )) . '\n',
+            )) . "\n",
             FILE_APPEND
         );
     }
