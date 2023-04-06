@@ -248,7 +248,7 @@ function send_text_file(string $filename, string $content) : void
 function send_sharex_config() : void
 {
     $name = $_SERVER['SERVER_NAME'];
-    $site_url = CONFIG::SITE_URL();
+    $site_url = str_replace("?sharex", "", CONFIG::SITE_URL());
     send_text_file($name.'.sxcu', <<<EOT
 {
   "Name": "$name",
@@ -265,7 +265,7 @@ EOT);
 function send_hupl_config() : void
 {
     $name = $_SERVER['SERVER_NAME'];
-    $site_url = CONFIG::SITE_URL();
+    $site_url = str_replace("?hupl", "", CONFIG::SITE_URL());
     send_text_file($name.'.hupl', <<<EOT
 {
   "name": "$name",
