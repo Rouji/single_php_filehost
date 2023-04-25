@@ -152,12 +152,13 @@ function store_file(string $name, string $tmpfile, bool $formatted = false) : vo
         putenv('ORIGINAL_NAME='.$name);
         putenv('STORED_FILE='.$target_file);
         $ret = -1;
-        $out = exec(CONFIG::EXTERNAL_HOOK, $_ = null, $ret);
-        if ($out !== false && $ret !== 0)
+        $out = null;
+        $last_line = exec(CONFIG::EXTERNAL_HOOK, $out, $ret);
+        if ($last_line !== false && $ret !== 0)
         {
             unlink($target_file);
             header('HTTP/1.0 400 Bad Request');
-            print("Error: $out\n");
+            print("Error: $last_line\n");
             return;
         }
     }
