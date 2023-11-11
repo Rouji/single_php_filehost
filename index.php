@@ -8,6 +8,7 @@ class CONFIG
 
     const UPLOAD_TIMEOUT = 5*60; //max. time an upload can take before it times out
     const ID_LENGTH = 3; //length of the random file ID
+    const ID_LENGTH_SECRET = 24; //length of the random file ID for "secret", set to ID_LENGTH to disable
     const STORE_PATH = 'files/'; //directory to store uploaded files in
     const LOG_PATH = null; //path to log uploads + resulting links to
     const DOWNLOAD_PATH = '%s'; //the path part of the download url. %s = placeholder for filename
@@ -125,7 +126,13 @@ function store_file(string $name, string $tmpfile, bool $formatted = false) : vo
     }
     $ext = substr($ext, 0, CONFIG::MAX_EXT_LEN);
     $tries_per_len=3; //try random names a few times before upping the length
-    for ($len = CONFIG::ID_LENGTH; ; ++$len)
+
+    $id_length=CONFIG::ID_LENGTH;
+    if(isset($_POST['secret'])) {
+        $id_length=CONFIG::ID_LENGTH_SECRET;
+    }
+
+    for ($len = $id_length; ; ++$len)
     {
         for ($n=0; $n<=$tries_per_len; ++$n)
         {
@@ -289,6 +296,7 @@ function print_index() : void
     $max_size = CONFIG::MAX_FILESIZE;
     $max_age = CONFIG::MAX_FILEAGE;
     $mail = CONFIG::ADMIN_EMAIL;
+    $id_length_secret = CONFIG::ID_LENGTH_SECRET;
 
 
 echo <<<EOT
@@ -307,6 +315,10 @@ curl -F "file=@/path/to/your/file.jpg" $site_url
 
 Or if you want to pipe to curl *and* have a file extension, add a "filename":
 echo "hello" | curl -F "file=@-;filename=.txt" $site_url
+
+To use a longer ID length of $id_length_secret, add -F secret= to the
+curl options. This makes the key less easy to guess. Please don't
+consider it secure, the file is stored on the server in plain format.
 
 On Windows, you can use <a href="https://getsharex.com/">ShareX</a> and import <a href="$sharex_url">this</a> custom uploader.
 On Android, you can use an app called <a href="https://github.com/Rouji/Hupl">Hupl</a> with <a href="$hupl_url">this</a> uploader.
