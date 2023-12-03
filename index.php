@@ -7,8 +7,8 @@ class CONFIG
     const DECAY_EXP = 2; //high values penalise larger files more
 
     const UPLOAD_TIMEOUT = 5*60; //max. time an upload can take before it times out
-    const ID_LENGTH = 3; //length of the random file ID
-    const ID_LENGTH_SECRET = 24; //length of the random file ID for "secret", set to ID_LENGTH to disable
+    const MIN_ID_LENGTH = 3; //min. length of the random file ID
+    const MAX_ID_LENGTH = 24; //max. length of the random file ID, set to MIN_ID_LENGTH to disable
     const STORE_PATH = 'files/'; //directory to store uploaded files in
     const LOG_PATH = null; //path to log uploads + resulting links to
     const DOWNLOAD_PATH = '%s'; //the path part of the download url. %s = placeholder for filename
@@ -127,9 +127,9 @@ function store_file(string $name, string $tmpfile, bool $formatted = false) : vo
     $ext = substr($ext, 0, CONFIG::MAX_EXT_LEN);
     $tries_per_len=3; //try random names a few times before upping the length
 
-    $id_length=CONFIG::ID_LENGTH;
-    if(isset($_POST['secret'])) {
-        $id_length=CONFIG::ID_LENGTH_SECRET;
+    $id_length=CONFIG::MIN_ID_LENGTH;
+    if(isset($_POST['id_length']) && ctype_digit($_POST['id_length'])) {
+        $id_length = max(CONFIG::MIN_ID_LENGTH, min(CONFIG::MAX_ID_LENGTH, $_POST['id_length']));
     }
 
     for ($len = $id_length; ; ++$len)
@@ -152,7 +152,7 @@ function store_file(string $name, string $tmpfile, bool $formatted = false) : vo
         header('HTTP/1.0 520 Unknown Error');
         return;
     }
-    
+
     if (CONFIG::EXTERNAL_HOOK !== null)
     {
         putenv('REMOTE_ADDR='.$_SERVER['REMOTE_ADDR']);
@@ -296,8 +296,13 @@ function print_index() : void
     $max_size = CONFIG::MAX_FILESIZE;
     $max_age = CONFIG::MAX_FILEAGE;
     $mail = CONFIG::ADMIN_EMAIL;
-    $id_length_secret = CONFIG::ID_LENGTH_SECRET;
+    $max_id_length = CONFIG::MAX_ID_LENGTH;
 
+    $length_info = "\nTo use a longer file ID (up to $max_id_length characters), add -F id_length=&lt;number&gt;\n";
+    if (CONFIG::MIN_ID_LENGTH == CONFIG::MAX_ID_LENGTH)
+    {
+        $length_info  = "";
+    }
 
 echo <<<EOT
 <!DOCTYPE html>
@@ -315,11 +320,7 @@ curl -F "file=@/path/to/your/file.jpg" $site_url
 
 Or if you want to pipe to curl *and* have a file extension, add a "filename":
 echo "hello" | curl -F "file=@-;filename=.txt" $site_url
-
-To use a longer ID length of $id_length_secret, add -F secret= to the
-curl options. This makes the key less easy to guess. Please don't
-consider it secure, the file is stored on the server in plain format.
-
+$length_info
 On Windows, you can use <a href="https://getsharex.com/">ShareX</a> and import <a href="$sharex_url">this</a> custom uploader.
 On Android, you can use an app called <a href="https://github.com/Rouji/Hupl">Hupl</a> with <a href="$hupl_url">this</a> uploader.
 
