@@ -23,7 +23,12 @@ class CONFIG
     public static function SITE_URL() : string
     {
         $proto = ($_SERVER['HTTPS'] ?? 'off') == 'on' || CONFIG::FORCE_HTTPS ? 'https' : 'http';
-        return "$proto://{$_SERVER['HTTP_HOST']}{$_SERVER['REQUEST_URI']}";
+        return "$proto://{$_SERVER['HTTP_HOST']}";
+    }
+
+    public static function SCRIPT_URL() : string
+    {
+        return CONFIG::SITE_URL().$_SERVER['REQUEST_URI'];
     }
 };
 
@@ -173,7 +178,7 @@ function store_file(string $name, string $tmpfile, bool $formatted = false) : vo
     }
 
     //print the download link of the file
-    $url = sprintf(CONFIG::SITE_URL().CONFIG::DOWNLOAD_PATH, $basename);
+    $url = sprintf(CONFIG::SITE_URL().'/'.CONFIG::DOWNLOAD_PATH, $basename);
 
     if ($formatted)
     {
@@ -258,7 +263,7 @@ function send_text_file(string $filename, string $content) : void
 function send_sharex_config() : void
 {
     $name = $_SERVER['SERVER_NAME'];
-    $site_url = str_replace("?sharex", "", CONFIG::SITE_URL());
+    $site_url = str_replace("?sharex", "", CONFIG::SCRIPT_URL());
     send_text_file($name.'.sxcu', <<<EOT
 {
   "Name": "$name",
@@ -275,7 +280,7 @@ EOT);
 function send_hupl_config() : void
 {
     $name = $_SERVER['SERVER_NAME'];
-    $site_url = str_replace("?hupl", "", CONFIG::SITE_URL());
+    $site_url = str_replace("?hupl", "", CONFIG::SCRIPT_URL());
     send_text_file($name.'.hupl', <<<EOT
 {
   "name": "$name",
@@ -290,7 +295,7 @@ EOT);
 // use it, how to upload, etc.
 function print_index() : void
 {
-    $site_url = CONFIG::SITE_URL();
+    $site_url = CONFIG::SCRIPT_URL();
     $sharex_url = $site_url.'?sharex';
     $hupl_url = $site_url.'?hupl';
     $decay = CONFIG::DECAY_EXP;
