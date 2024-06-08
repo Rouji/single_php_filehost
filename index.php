@@ -16,11 +16,13 @@ class CONFIG
     const EXTERNAL_HOOK = null; //external program to call for each upload
     const AUTO_FILE_EXT = false; //automatically try to detect file extension for files that have none
 
+    const FORCE_HTTPS = false; //force generated links to be https://
+
     const ADMIN_EMAIL = 'admin@example.com';  //address for inquiries
 
     public static function SITE_URL() : string
     {
-        $proto = ($_SERVER['HTTPS'] ?? 'off') == 'on' ? 'https' : 'http';
+        $proto = ($_SERVER['HTTPS'] ?? 'off') == 'on' || CONFIG::FORCE_HTTPS ? 'https' : 'http';
         return "$proto://{$_SERVER['HTTP_HOST']}{$_SERVER['REQUEST_URI']}";
     }
 };
