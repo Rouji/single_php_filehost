@@ -32,11 +32,11 @@ class CONFIG
     {
         return CONFIG::SITE_URL().$_SERVER['REQUEST_URI'];
     }
+    
     public static function IMAGICK_AVAILABLE() : bool
     {
         return extension_loaded('imagick');
     }
-
 };
 
 
