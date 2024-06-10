@@ -19,6 +19,8 @@ class CONFIG
     const FORCE_HTTPS = false; //force generated links to be https://
 
     const ADMIN_EMAIL = 'admin@example.com';  //address for inquiries
+    const STRIP_EXIF = true;
+    const IMG_EXT = ['png', 'jpg', 'jpeg', 'gif'];
 
     public static function SITE_URL() : string
     {
@@ -30,6 +32,11 @@ class CONFIG
     {
         return CONFIG::SITE_URL().$_SERVER['REQUEST_URI'];
     }
+    public static function IMAGICK_AVAILABLE() : bool
+    {
+        return extension_loaded('imagick');
+    }
+
 };
 
 
@@ -97,6 +104,24 @@ function ext_by_finfo(string $path) : string
     return '';
 }
 
+function autoRotateImage($image)
+{
+    $orientation = $image->getImageOrientation();
+    switch($orientation) {
+        case imagick::ORIENTATION_BOTTOMRIGHT:
+            $image->rotateimage("#000", 180); // rotate 180 degrees
+            break;
+        case imagick::ORIENTATION_RIGHTTOP:
+            $image->rotateimage("#000", 90); // rotate 90 degrees CW
+            break;
+        case imagick::ORIENTATION_LEFTBOTTOM:
+            $image->rotateimage("#000", -90); // rotate 90 degrees CCW
+            break;
+    }
+    // Now that it's auto-rotated, make sure the EXIF data is correct in case the EXIF gets saved with the image!
+    $image->setImageOrientation(imagick::ORIENTATION_TOPLEFT);
+}
+
 // store an uploaded file, given its name and temporary path (e.g. values straight out of $_FILES)
 // files are stored wit a randomised name, but with their original extension
 //
@@ -132,6 +157,19 @@ function store_file(string $name, string $tmpfile, bool $formatted = false) : vo
         $ext = ext_by_finfo($tmpfile);
     }
     $ext = substr($ext, 0, CONFIG::MAX_EXT_LEN);
+
+    if (CONFIG::STRIP_EXIF && CONFIG::IMAGICK_AVAILABLE() && in_array(strtolower($ext),CONFIG::IMG_EXT))
+    {
+        $img = new Imagick($tmpfile);
+        $profiles = $img->getImageProfiles("icc", true);
+        autoRotateImage($img);
+        $img->stripImage();
+        if(!empty($profiles)) {
+            $img->profileImage("icc", $profiles['icc']);
+        }
+        $img->writeImage($tmpfile);
+    }
+   
     $tries_per_len=3; //try random names a few times before upping the length
 
     $id_length=CONFIG::MIN_ID_LENGTH;
@@ -304,6 +342,7 @@ function print_index() : void
     $max_age = CONFIG::MAX_FILEAGE;
     $mail = CONFIG::ADMIN_EMAIL;
     $max_id_length = CONFIG::MAX_ID_LENGTH;
+    $exif = (CONFIG::IMAGICK_AVAILABLE() ? 'EXIF stripping supported: ' . (CONFIG::STRIP_EXIF ? 'enabled' : 'disabled') : 'EXIF stripping NOT supported, not enabled');
 
     $length_info = "\nTo use a longer file ID (up to $max_id_length characters), add -F id_length=&lt;number&gt;\n";
     if (CONFIG::MIN_ID_LENGTH == CONFIG::MAX_ID_LENGTH)
@@ -342,6 +381,9 @@ selection input.)
 <input type="submit" value="Upload"/>
 </form>
 <pre>
+
+ === PHP Modules ===
+$exif
 
 
  === File Sizes etc. ===
