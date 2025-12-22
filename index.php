@@ -36,22 +36,16 @@ class CONFIG
 // generate a random string of characters with given length
 function rnd_str(int $len) : string
 {
-    // The character set for the random string
     $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
-    $max_idx = strlen($chars) - 1;
+    $chars_len = strlen($chars);
+    $random = random_bytes($len);
     $out = '';
- 
-    // Generate cryptographically secure random bytes
-    $random_bytes = random_bytes($len);
- 
-    // Map each random byte to a character in the allowed set
+
     for ($i = 0; $i < $len; ++$i)
     {
-        // ord() gets the integer value of the byte
-        // The modulo operator maps it to an index within our character set
-        $out .= $chars[ord($random_bytes[$i]) % ($max_idx + 1)];
+        $out .= $chars[ord($random[$i]) % $chars_len];
     }
- 
+
     return $out;
 }
 
