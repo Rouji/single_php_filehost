@@ -37,12 +37,15 @@ class CONFIG
 function rnd_str(int $len) : string
 {
     $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
-    $max_idx = strlen($chars) - 1;
+    $chars_len = strlen($chars);
+    $random = random_bytes($len);
     $out = '';
-    while ($len--)
+
+    for ($i = 0; $i < $len; ++$i)
     {
-        $out .= $chars[mt_rand(0,$max_idx)];
+        $out .= $chars[ord($random[$i]) % $chars_len];
     }
+
     return $out;
 }
 
