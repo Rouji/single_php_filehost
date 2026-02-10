@@ -269,12 +269,12 @@ function send_sharex_config() : void
     $site_url = str_replace("?sharex", "", CONFIG::SCRIPT_URL());
     send_text_file($name.'.sxcu', <<<EOT
 {
-  "Name": "$name",
+  "Version": "18.0.2",
   "DestinationType": "ImageUploader, FileUploader",
-  "RequestType": "POST",
+  "RequestMethod": "POST",
   "RequestURL": "$site_url",
   "FileFormName": "file",
-  "ResponseType": "Text"
+  "Body": "MultipartFormData"
 }
 EOT);
 }
