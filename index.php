@@ -119,13 +119,16 @@ function store_file(string $name, string $tmpfile, bool $formatted = false) : vo
     if ($size > CONFIG::MAX_FILESIZE * 1024 * 1024)
     {
         header('HTTP/1.0 413 Payload Too Large');
-        print("Error 413: Max File Size ({CONFIG::MAX_FILESIZE} MiB) Exceeded\n");
+        $max = CONFIG::MAX_FILESIZE;
+        $body = '<div class="card error-card"><div class="error-title">413 — File Too Large</div><p>Maximum file size is <strong>'.$max.' MiB</strong>.</p><a class="btn-home" href="javascript:history.back()">← Go back</a></div>';
+        print(html_shell($body));
         return;
     }
     if ($size == 0)
     {
         header('HTTP/1.0 400 Bad Request');
-        print('Error 400: Uploaded file is empty\n');
+        $body = '<div class="card error-card"><div class="error-title">400 — Empty File</div><p>The uploaded file is empty.</p><a class="btn-home" href="javascript:history.back()">← Go back</a></div>';
+        print(html_shell($body));
         return;
     }
 
@@ -175,7 +178,8 @@ function store_file(string $name, string $tmpfile, bool $formatted = false) : vo
         {
             unlink($target_file);
             header('HTTP/1.0 400 Bad Request');
-            print("Error: $last_line\n");
+            $body = '<div class="card error-card"><div class="error-title">400 — Upload Rejected</div><p>'.htmlspecialchars($last_line).'</p><a class="btn-home" href="javascript:history.back()">← Go back</a></div>';
+            print(html_shell($body));
             return;
         }
     }
@@ -185,7 +189,71 @@ function store_file(string $name, string $tmpfile, bool $formatted = false) : vo
 
     if ($formatted)
     {
-        print("<pre>Access your file here: <a href=\"$url\">$url</a></pre>");
+        $url_base = strtok(CONFIG::SCRIPT_URL(), '?');
+        $body = <<<BODY
+<div class="card">
+  <div class="result-label">✓ Upload successful</div>
+  <div class="url-box" id="result-url">$url</div>
+  <a class="btn-open" href="$url" target="_blank" rel="noopener">Open file ↗</a>
+  <div class="result-actions">
+    <a class="result-action-link" href="$url_base">← Upload another</a>
+    <span class="result-sep">·</span>
+    <button class="result-action-link" id="copy-btn" onclick="copyUrl()">Copy URL</button>
+  </div>
+</div>
+<style>
+.btn-open {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  padding: 13px;
+  background: var(--accent);
+  color: #fff;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: var(--radius);
+  text-align: center;
+  text-decoration: none;
+  transition: opacity .15s;
+}
+.btn-open:hover { opacity: 0.85; }
+.result-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+.result-sep { color: var(--border2); }
+.result-action-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+  text-decoration: none;
+  transition: color .15s;
+}
+.result-action-link:hover { color: var(--text); }
+.result-action-link.copied { color: var(--accent); }
+</style>
+<script>
+function copyUrl() {
+  navigator.clipboard.writeText(document.getElementById('result-url').textContent.trim()).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy URL'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+</script>
+BODY;
+        print(html_shell($body));
     }
     else
     {
@@ -200,7 +268,7 @@ function store_file(string $name, string $tmpfile, bool $formatted = false) : vo
             implode("\t", array(
                 date('c'),
                 $_SERVER['REMOTE_ADDR'],
-                filesize($tmpfile),
+                $size,
                 escapeshellarg($name),
                 $basename
             )) . "\n",
@@ -254,6 +322,466 @@ function purge_files() : void
     print("Deleted $num_del files totalling $total_size MiB\n");
 }
 
+function html_shell(string $body, string $extra_head = '') : string
+{
+    $mail = CONFIG::ADMIN_EMAIL;
+    return <<<EOT
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Filehost</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+  <script>
+    // Apply saved theme before paint to avoid flash
+    (function() {
+      var t = localStorage.getItem('fh-theme');
+      if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    })();
+  </script>
+  $extra_head
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #f0f2f5;
+      --bg-inset: #e4e8ee;
+      --surface:  #ffffff;
+      --border:   #e2e6ec;
+      --border2:  #ccd2db;
+      --text:     #1a2030;
+      --muted:    #7a8699;
+      --accent:   #0969da;
+      --accent2:  #1a7f5a;
+      --danger:   #cf222e;
+      --radius:   10px;
+      --grid-line: rgba(0,0,0,0.035);
+      --grid-line2: rgba(0,0,0,0.025);
+      --glow: rgba(9,105,218,0.06);
+    }
+
+    [data-theme="dark"] {
+      --bg:       #0c0e10;
+      --bg-inset: #0a0c0e;
+      --surface:  #13161a;
+      --border:   #1f2429;
+      --border2:  #2a3038;
+      --text:     #c8d0db;
+      --muted:    #5a6472;
+      --accent:   #00e5a0;
+      --accent2:  #00b3ff;
+      --danger:   #ff4f6a;
+      --grid-line: rgba(255,255,255,0.02);
+      --grid-line2: rgba(255,255,255,0.015);
+      --glow: rgba(0,229,160,0.07);
+    }
+
+    html, body {
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      transition: background .2s, color .2s;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 20px 80px;
+      background-image:
+        radial-gradient(ellipse 60% 40% at 50% -10%, var(--glow) 0%, transparent 70%),
+        repeating-linear-gradient(0deg, transparent, transparent 39px, var(--grid-line) 39px, var(--grid-line) 40px),
+        repeating-linear-gradient(90deg, transparent, transparent 39px, var(--grid-line2) 39px, var(--grid-line2) 40px);
+    }
+
+    .wrap { width: 100%; max-width: 640px; }
+
+    /* ── Header ── */
+    header {
+      margin-bottom: 40px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    header h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 28px;
+      letter-spacing: -0.5px;
+      color: var(--text);
+    }
+    header h1 span { color: var(--accent); }
+    header .tag {
+      font-size: 11px;
+      color: var(--muted);
+      border: 1px solid var(--border2);
+      border-radius: 4px;
+      padding: 2px 7px;
+      letter-spacing: 0.04em;
+    }
+    header .spacer { flex: 1; }
+
+    /* ── Theme toggle ── */
+    #theme-toggle {
+      background: none;
+      border: 1px solid var(--border2);
+      border-radius: 99px;
+      padding: 5px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: border-color .15s, color .15s;
+      white-space: nowrap;
+    }
+    #theme-toggle:hover { border-color: var(--text); color: var(--text); }
+    #theme-toggle .icon { font-size: 14px; line-height: 1; }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--glow) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    /* ── Drop zone ── */
+    #drop-zone {
+      border: 2px dashed var(--border2);
+      border-radius: var(--radius);
+      padding: 48px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      position: relative;
+    }
+    #drop-zone.dragover {
+      border-color: var(--accent);
+      background: rgba(0,229,160,0.05);
+    }
+    #drop-zone input[type=file] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .drop-icon {
+      font-size: 36px;
+      margin-bottom: 12px;
+      display: block;
+      filter: grayscale(0.4);
+    }
+    .drop-label {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .drop-sub {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    #file-name {
+      margin-top: 14px;
+      font-size: 12px;
+      color: var(--accent);
+      min-height: 18px;
+      word-break: break-all;
+    }
+
+    /* ── Progress ── */
+    #progress-wrap {
+      display: none;
+      margin-top: 20px;
+    }
+    #progress-wrap.visible { display: block; }
+    .prog-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .prog-bar-bg {
+      height: 4px;
+      background: var(--border);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .prog-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 99px;
+      width: 0%;
+      transition: width .1s linear;
+    }
+
+    /* ── Upload button ── */
+    .btn-upload {
+      display: block;
+      width: 100%;
+      margin-top: 20px;
+      padding: 13px;
+      background: var(--accent);
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: opacity .15s, transform .1s;
+    }
+    .btn-upload:hover { opacity: 0.85; }
+    .btn-upload:active { transform: scale(0.98); }
+    .btn-upload:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    /* ── Result card ── */
+    .result-label {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .url-row {
+      display: flex;
+      gap: 10px;
+      align-items: stretch;
+    }
+    .url-box {
+      flex: 1;
+      background: var(--bg-inset);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      padding: 11px 14px;
+      font-size: 13px;
+      color: var(--accent);
+      word-break: break-all;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .btn-copy {
+      flex-shrink: 0;
+      background: var(--border2);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 0 16px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: background .15s, color .15s;
+      letter-spacing: 0.04em;
+    }
+    .btn-copy:hover { background: var(--accent); color: #fff; }
+    .btn-copy.copied { background: var(--accent); color: #fff; }
+
+    .btn-home {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 20px;
+      padding: 9px 16px;
+      background: transparent;
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-home:hover { border-color: var(--text); color: var(--text); }
+
+    /* ── Info section ── */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .info-tile {
+      background: var(--bg-inset);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+    }
+    .info-tile .val {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+    }
+    .info-tile .val span { color: var(--accent); font-size: 14px; }
+    .info-tile .key {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      margin-top: 2px;
+    }
+
+    .formula {
+      background: var(--bg-inset);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent2);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+    .formula strong { color: var(--text); }
+
+    /* ── CLI section ── */
+    .cli-block {
+      background: var(--bg-inset);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      position: relative;
+      margin-bottom: 10px;
+    }
+    .cli-block code {
+      font-size: 12px;
+      color: var(--accent2);
+      display: block;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .cli-copy {
+      position: absolute;
+      top: 8px; right: 8px;
+      background: var(--border2);
+      border: none;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: color .15s;
+    }
+    .cli-copy:hover { color: var(--text); }
+
+    section h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    section h2::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    section { margin-bottom: 32px; }
+
+    .links-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+    .pill-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 13px;
+      border: 1px solid var(--border2);
+      border-radius: 99px;
+      font-size: 11px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: border-color .15s, color .15s;
+    }
+    .pill-link:hover { border-color: var(--accent); color: var(--accent); }
+
+    footer {
+      margin-top: 40px;
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    footer a { color: var(--muted); text-decoration: underline dotted; }
+    footer a:hover { color: var(--text); }
+
+    /* ── Error state ── */
+    .error-card { border-color: var(--danger); }
+    .error-card::before { background: linear-gradient(135deg, rgba(255,79,106,0.06) 0%, transparent 50%); }
+    .error-title { color: var(--danger); font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+
+    @media (max-width: 480px) {
+      .info-grid { grid-template-columns: 1fr; }
+      .url-row { flex-direction: column; }
+      .btn-copy { padding: 10px; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>file<span>host</span></h1>
+    <span class="tag">v1</span>
+    <span class="spacer"></span>
+    <button id="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode">
+      <span class="icon" id="theme-icon">☀️</span>
+      <span id="theme-label">Light</span>
+    </button>
+  </header>
+  $body
+  <footer>
+    Questions or abuse reports? <a href="mailto:$mail">$mail</a> &nbsp;·&nbsp;
+    <a href="https://github.com/Rouji/single_php_filehost" target="_blank" rel="noopener">source</a>
+  </footer>
+  <script>
+    function applyTheme(t) {
+      if (t === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.getElementById('theme-icon').textContent = '☀️';
+        document.getElementById('theme-label').textContent = 'Light';
+      } else {
+        document.documentElement.removeAttribute('data-theme');
+        document.getElementById('theme-icon').textContent = '🌙';
+        document.getElementById('theme-label').textContent = 'Dark';
+      }
+    }
+    function toggleTheme() {
+      var current = document.documentElement.getAttribute('data-theme');
+      var next = current === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('fh-theme', next);
+      applyTheme(next);
+    }
+    // Sync button label to whatever theme was applied by the anti-FOUC script
+    applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
+  </script>
+</div>
+</body>
+</html>
+EOT;
+}
+
 function send_text_file(string $filename, string $content) : void
 {
     header('Content-type: application/octet-stream');
@@ -294,8 +822,7 @@ function send_hupl_config() : void
 EOT);
 }
 
-// print a plaintext info page, explaining what this script does and how to
-// use it, how to upload, etc.
+// print a styled index page
 function print_index() : void
 {
     $site_url = CONFIG::SCRIPT_URL();
@@ -305,74 +832,167 @@ function print_index() : void
     $min_age = CONFIG::MIN_FILEAGE;
     $max_size = CONFIG::MAX_FILESIZE;
     $max_age = CONFIG::MAX_FILEAGE;
-    $mail = CONFIG::ADMIN_EMAIL;
     $max_id_length = CONFIG::MAX_ID_LENGTH;
 
-    $length_info = "\nTo use a longer file ID (up to $max_id_length characters), add -F id_length=&lt;number&gt;\n";
-    if (CONFIG::MIN_ID_LENGTH == CONFIG::MAX_ID_LENGTH)
+    $length_info_html = '';
+    if (CONFIG::MIN_ID_LENGTH !== CONFIG::MAX_ID_LENGTH)
     {
-        $length_info  = "";
+        $length_info_html = "<p>To use a longer file ID (up to <strong>$max_id_length</strong> chars), add <code>-F id_length=&lt;number&gt;</code></p>";
     }
 
-echo <<<EOT
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>Filehost</title>
-    <meta name="description" content="Minimalistic service for sharing temporary files." />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-</head>
-<body>
-<pre>
- === How To Upload ===
-You can upload files to this site via a simple HTTP POST, e.g. using curl:
-curl -F "file=@/path/to/your/file.jpg" $site_url
+    $fixed_retention = (CONFIG::MIN_FILEAGE === CONFIG::MAX_FILEAGE || CONFIG::DECAY_EXP == 0);
+    if ($fixed_retention)
+    {
+        $retention_tile_val = "$max_age <span>days</span>";
+        $retention_kept     = "$max_age days";
+        $retention_formula  = '';
+        $retention_desc     = "<p style=\"font-size:12px;color:var(--muted)\">All files are kept for exactly <strong style=\"color:var(--text)\">$max_age days</strong>.</p>";
+    }
+    else
+    {
+        $retention_tile_val = "$min_age – $max_age <span>days</span>";
+        $retention_kept     = "$min_age – $max_age days";
+        $retention_formula  = "<div class=\"formula\"><strong>max age</strong> = MIN_AGE + (MAX_AGE - MIN_AGE) &times; (1 &minus; FILE_SIZE / MAX_SIZE)<sup>$decay</sup></div>";
+        $retention_desc     = "<p style=\"font-size:12px;color:var(--muted)\">Larger files are rotated sooner. Small files stay up to <strong style=\"color:var(--text)\">$max_age days</strong>.</p>";
+    }
 
-Or if you want to pipe to curl *and* have a file extension, add a "filename":
-echo "hello" | curl -F "file=@-;filename=.txt" $site_url
-$length_info
-On Windows, you can use <a href="https://getsharex.com/">ShareX</a> and import <a href="$sharex_url">this</a> custom uploader.
-On Android, you can use an app called <a href="https://github.com/Rouji/Hupl">Hupl</a> with <a href="$hupl_url">this</a> uploader.
+    $body = <<<BODY
+<!-- ── Upload card ── -->
+<div class="card">
+  <div id="drop-zone">
+    <input type="file" name="file" id="file-input" />
+    <span class="drop-icon">📂</span>
+    <div class="drop-label">Drop a file here, or click to browse</div>
+    <div class="drop-sub">Max $max_size MiB &nbsp;·&nbsp; Kept $retention_kept</div>
+    <div id="file-name"></div>
+  </div>
+  <div id="progress-wrap">
+    <div class="prog-label">
+      <span id="prog-text">Uploading…</span>
+      <span id="prog-pct">0%</span>
+    </div>
+    <div class="prog-bar-bg"><div class="prog-bar-fill" id="prog-fill"></div></div>
+  </div>
+  <button class="btn-upload" id="upload-btn" disabled>Upload</button>
+</div>
 
+<!-- ── CLI section ── -->
+<section>
+  <h2>Command Line</h2>
+  <div class="cli-block">
+    <code>curl -F "file=@/path/to/file.jpg" $site_url</code>
+    <button class="cli-copy" onclick="cliCopy(this, 'curl -F \"file=@/path/to/file.jpg\" $site_url')">copy</button>
+  </div>
+  <div class="cli-block">
+    <code>echo "hello" | curl -F "file=@-;filename=.txt" $site_url</code>
+    <button class="cli-copy" onclick="cliCopy(this, 'echo \"hello\" | curl -F \"file=@-;filename=.txt\" $site_url')">copy</button>
+  </div>
+  $length_info_html
+</section>
 
-Or simply choose a file and click "Upload" below:
-(Hint: If you're lucky, your browser may support drag-and-drop onto the file 
-selection input.)
-</pre>
-<form id="frm" method="post" enctype="multipart/form-data">
-<input type="file" name="file" id="file" />
-<input type="hidden" name="formatted" value="true" />
-<input type="submit" value="Upload"/>
-</form>
-<pre>
+<!-- ── Apps section ── -->
+<section>
+  <h2>Upload Clients</h2>
+  <div class="links-row">
+    <a class="pill-link" href="$sharex_url">⬇ ShareX config <span style="color:var(--muted);font-size:10px">(Windows)</span></a>
+    <a class="pill-link" href="$hupl_url">⬇ Hupl config <span style="color:var(--muted);font-size:10px">(Android)</span></a>
+  </div>
+</section>
 
+<!-- ── Retention section ── -->
+<section>
+  <h2>Retention Policy</h2>
+  <div class="info-grid">
+    <div class="info-tile">
+      <div class="val">$max_size <span>MiB</span></div>
+      <div class="key">Max file size</div>
+    </div>
+    <div class="info-tile">
+      <div class="val">$retention_tile_val</div>
+      <div class="key">Retention window</div>
+    </div>
+  </div>
+  $retention_formula
+  $retention_desc
+</section>
 
- === File Sizes etc. ===
-The maximum allowed file size is $max_size MiB.
+<script>
+const dropZone  = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+const fileLabel = document.getElementById('file-name');
+const uploadBtn = document.getElementById('upload-btn');
+const progWrap  = document.getElementById('progress-wrap');
+const progFill  = document.getElementById('prog-fill');
+const progPct   = document.getElementById('prog-pct');
+const progText  = document.getElementById('prog-text');
 
-Files are kept for a minimum of $min_age, and a maximum of $max_age Days.
+function setFile(file) {
+  if (!file) return;
+  fileLabel.textContent = '📄 ' + file.name + '  (' + (file.size / 1024 / 1024).toFixed(2) + ' MiB)';
+  uploadBtn.disabled = false;
+  uploadBtn.dataset.file = '1';
+}
 
-How long a file is kept depends on its size. Larger files are deleted earlier 
-than small ones. This relation is non-linear and skewed in favour of small 
-files.
+fileInput.addEventListener('change', () => setFile(fileInput.files[0]));
 
-The exact formula for determining the maximum age for a file is:
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (!file) return;
+  const dt = new DataTransfer();
+  dt.items.add(file);
+  fileInput.files = dt.files;
+  setFile(file);
+});
 
-MIN_AGE + (MAX_AGE - MIN_AGE) * (1-(FILE_SIZE/MAX_SIZE))^$decay
+uploadBtn.addEventListener('click', () => {
+  if (!fileInput.files[0]) return;
+  const fd = new FormData();
+  fd.append('file', fileInput.files[0]);
+  fd.append('formatted', 'true');
 
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', '$site_url');
 
- === Source ===
-The PHP script used to provide this service is open source and available on 
-<a href="https://github.com/Rouji/single_php_filehost">GitHub</a>
+  xhr.upload.addEventListener('progress', e => {
+    if (!e.lengthComputable) return;
+    const pct = Math.round(e.loaded / e.total * 100);
+    progFill.style.width = pct + '%';
+    progPct.textContent = pct + '%';
+    if (pct === 100) progText.textContent = 'Processing…';
+  });
 
+  xhr.addEventListener('load', () => {
+    document.open();
+    document.write(xhr.responseText);
+    document.close();
+  });
 
- === Contact ===
-If you want to report abuse of this service, or have any other inquiries, 
-please write an email to $mail
-</pre>
-</body>
-</html>
-EOT;
+  xhr.addEventListener('error', () => {
+    alert('Upload failed. Please try again.');
+    progWrap.classList.remove('visible');
+    uploadBtn.disabled = false;
+  });
+
+  progWrap.classList.add('visible');
+  uploadBtn.disabled = true;
+  uploadBtn.textContent = 'Uploading…';
+  xhr.send(fd);
+});
+
+function cliCopy(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'copied!';
+    setTimeout(() => { btn.textContent = 'copy'; }, 1800);
+  });
+}
+</script>
+BODY;
+
+    print(html_shell($body));
 }
 
 
