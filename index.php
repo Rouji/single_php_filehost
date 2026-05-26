@@ -193,54 +193,65 @@ function store_file(string $name, string $tmpfile, bool $formatted = false) : vo
         $body = <<<BODY
 <div class="card">
   <div class="result-label">✓ Upload successful</div>
-  <div class="url-box" id="result-url">$url</div>
-  <a class="btn-open" href="$url" target="_blank" rel="noopener">Open file ↗</a>
-  <div class="result-actions">
-    <a class="result-action-link" href="$url_base">← Upload another</a>
-    <span class="result-sep">·</span>
-    <button class="result-action-link" id="copy-btn" onclick="copyUrl()">Copy URL</button>
+  <div class="result-top">
+    <div class="url-box" id="result-url">$url</div>
+    <a class="btn-open" href="$url" target="_blank" rel="noopener">Open file ↗</a>
+  </div>
+  <div class="result-bottom">
+    <a class="btn-secondary" href="$url_base">← Upload another</a>
+    <button class="btn-secondary" id="copy-btn" onclick="copyUrl()">Copy URL</button>
   </div>
 </div>
 <style>
+.result-top {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: stretch;
+  margin-top: 10px;
+}
+.result-bottom {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
 .btn-open {
-  display: block;
-  width: 100%;
-  margin-top: 14px;
-  padding: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px;
   background: var(--accent);
   color: #fff;
   font-family: 'JetBrains Mono', monospace;
   font-weight: 700;
   font-size: 13px;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   border-radius: var(--radius);
   text-align: center;
   text-decoration: none;
+  white-space: nowrap;
   transition: opacity .15s;
 }
 .btn-open:hover { opacity: 0.85; }
-.result-actions {
+.btn-secondary {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  margin-top: 14px;
-}
-.result-sep { color: var(--border2); }
-.result-action-link {
+  padding: 10px;
   background: none;
-  border: none;
-  padding: 0;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
   font-family: 'JetBrains Mono', monospace;
   font-size: 12px;
   color: var(--muted);
   cursor: pointer;
   text-decoration: none;
-  transition: color .15s;
+  transition: border-color .15s, color .15s;
 }
-.result-action-link:hover { color: var(--text); }
-.result-action-link.copied { color: var(--accent); }
+.btn-secondary:hover { border-color: var(--text); color: var(--text); }
+.btn-secondary.copied { border-color: var(--accent); color: var(--accent); }
 </style>
 <script>
 function copyUrl() {
