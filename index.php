@@ -106,7 +106,7 @@ function ext_by_finfo(string $path) : string
 // $name: original filename
 // $tmpfile: temporary path of uploaded file
 // $formatted: set to true to display formatted message instead of bare link
-function store_file(string $name, string $tmpfile, bool $formatted = false) : void
+function store_file(string $name, string $tmpfile, bool $keep_name = false, bool $formatted = false) : void
 {
     //create folder, if it doesn't exist
     if (!file_exists(CONFIG::STORE_PATH))
@@ -142,12 +142,25 @@ function store_file(string $name, string $tmpfile, bool $formatted = false) : vo
         $id_length = max(CONFIG::MIN_ID_LENGTH, min(CONFIG::MAX_ID_LENGTH, $_POST['id_length']));
     }
 
+    $sanitised_noext = null;
+    if ($keep_name){
+        $sanitised_noext = preg_replace('/[^A-Za-z0-9._-]/', '_', pathinfo($name, PATHINFO_FILENAME));
+    }
+    if (empty($sanitised_noext)){
+        $keep_name = false;
+    }
+
+    $make_basename = function(int $len) use ($ext, $sanitised_noext, $keep_name) {
+        $id = rnd_str($len);
+        $base = $keep_name ? $id . '_' . $sanitised_noext : $id;
+        return $base . (empty($ext) ? '' : '.' . $ext);
+    };
+
     for ($len = $id_length; ; ++$len)
     {
         for ($n=0; $n<=$tries_per_len; ++$n)
         {
-            $id = rnd_str($len);
-            $basename = $id . (empty($ext) ? '' : '.' . $ext);
+            $basename = $make_basename($len);
             $target_file = CONFIG::STORE_PATH . $basename;
 
             if (!file_exists($target_file))
@@ -330,6 +343,9 @@ curl -F "file=@/path/to/your/file.jpg" $site_url
 
 Or if you want to pipe to curl *and* have a file extension, add a "filename":
 echo "hello" | curl -F "file=@-;filename=.txt" $site_url
+
+To keep the (sanitised) filename in the generated link, add "keep_name":
+curl -F "file=@/path/to/your/file.jpg" -F "keep_name=1" $site_url
 $length_info
 On Windows, you can use <a href="https://getsharex.com/">ShareX</a> and import <a href="$sharex_url">this</a> custom uploader.
 On Android, you can use an app called <a href="https://github.com/Rouji/Hupl">Hupl</a> with <a href="$hupl_url">this</a> uploader.
@@ -342,10 +358,11 @@ selection input.)
 <form id="frm" method="post" enctype="multipart/form-data">
 <input type="file" name="file" id="file" />
 <input type="hidden" name="formatted" value="true" />
-<input type="submit" value="Upload"/>
+<input type="submit" value="Upload"/><br/>
+<label for="keep_name">Keep filename</label>
+<input type="checkbox" name="keep_name" id="keep_name" />
 </form>
 <pre>
-
 
  === File Sizes etc. ===
 The maximum allowed file size is $max_size MiB.
@@ -383,8 +400,10 @@ if (isset($_FILES['file']['name']) &&
 {
     //file was uploaded, store it
     $formatted = isset($_REQUEST['formatted']);
+    $keep_name = isset($_REQUEST['keep_name']);
     store_file($_FILES['file']['name'],
               $_FILES['file']['tmp_name'],
+              $keep_name,
               $formatted);
 }
 else if (isset($_GET['sharex']))
