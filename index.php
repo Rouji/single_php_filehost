@@ -143,9 +143,14 @@ function store_file(string $name, string $tmpfile, bool $keep_name = false, bool
     }
 
     $sanitised_noext = null;
-    if ($keep_name){
-        $sanitised_noext = preg_replace('/[^A-Za-z0-9._-]/', '_', pathinfo($name, PATHINFO_FILENAME));
-    }
+	if ($keep_name) {
+	    $sanitised_noext = str_replace(
+	        ['ä', 'ö', 'ü', 'Ä', 'Ö', 'Ü', 'ß'],
+	        ['ae', 'oe', 'ue', 'Ae', 'Oe', 'Ue', 'ss'],
+	        pathinfo($name, PATHINFO_FILENAME)
+	    );
+	    $sanitised_noext = preg_replace('/[^A-Za-z0-9._-]/', '_', $sanitised_noext);
+	}
     if (empty($sanitised_noext)){
         $keep_name = false;
     }
