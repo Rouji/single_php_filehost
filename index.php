@@ -152,7 +152,7 @@ function store_file(string $name, string $tmpfile, bool $keep_name = false, bool
 
     $make_basename = function(int $len) use ($ext, $sanitised_noext, $keep_name) {
         $id = rnd_str($len);
-        $base = $keep_name ? $id . '_' . $sanitised_noext : $id;
+        $base = $keep_name ? $sanitised_noext . '_' . $id : $id;
         return $base . (empty($ext) ? '' : '.' . $ext);
     };
 
