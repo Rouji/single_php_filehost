@@ -144,7 +144,7 @@ function store_file(string $name, string $tmpfile, bool $keep_name = false, bool
 
     $sanitised_noext = null;
     if ($keep_name){
-        $sanitised_noext = preg_replace('/[^A-Za-z0-9._-]/', '_', pathinfo($name, PATHINFO_FILENAME));
+        $sanitised_noext = preg_replace('/[^\p{L}\p{N}._-]/u', '_', pathinfo($name, PATHINFO_FILENAME));
     }
     if (empty($sanitised_noext)){
         $keep_name = false;
@@ -194,11 +194,12 @@ function store_file(string $name, string $tmpfile, bool $keep_name = false, bool
     }
 
     //print the download link of the file
-    $url = sprintf(CONFIG::SITE_URL().'/'.CONFIG::DOWNLOAD_PATH, $basename);
+    $url = sprintf(CONFIG::SITE_URL().'/'.CONFIG::DOWNLOAD_PATH, rawurlencode($basename));
 
     if ($formatted)
     {
-        print("<pre>Access your file here: <a href=\"$url\">$url</a></pre>");
+        $display_url = sprintf(CONFIG::SITE_URL().'/'.CONFIG::DOWNLOAD_PATH, htmlspecialchars($basename, ENT_QUOTES));
+        print("<pre>Access your file here: <a href=\"$url\">$display_url</a></pre>");
     }
     else
     {
