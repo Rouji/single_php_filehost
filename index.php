@@ -214,7 +214,7 @@ function store_file(string $name, string $tmpfile, bool $keep_name = false, bool
             implode("\t", array(
                 date('c'),
                 $_SERVER['REMOTE_ADDR'],
-                filesize($tmpfile),
+                $size,
                 escapeshellarg($name),
                 $basename
             )) . "\n",
