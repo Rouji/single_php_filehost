@@ -62,6 +62,44 @@ location = / {
 }
 ```
 
+<details>
+<summary>Optional: download <code>keep_name</code> files with their original name (nginx)</summary>
+
+By default, files uploaded with `keep_name` are downloaded as `name_ID.ext`.
+With this setup, nginx gives the file its original name back. So you get `name.ext`,
+without the ID when it is downloaded. The link stays the same.
+
+1. In `index.php`, remove `_` from the characters in `rnd_str()`, so the last
+   `_` is always the separator:
+
+   ```php
+   $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-';
+   ```
+
+2. Add this to the `http` part of your nginx config (above the `server` block):
+
+   ```nginx
+   map $request_uri $dl_disposition {
+       default "";
+       "~^/(?<dl_name>[^?/]+)_[A-Za-z0-9-]+(?<dl_ext>(?:\.[A-Za-z0-9]+)*)(?:\?.*)?$"  "inline; filename*=UTF-8''$dl_name$dl_ext";
+   }
+   ```
+
+3. Add the header to the location that serves your files:
+
+   ```nginx
+   add_header Content-Disposition $dl_disposition;
+   ```
+
+Example: `my_photo_aB3-x.jpg` downloads as `my_photo.jpg`. Files without
+`keep_name` are not affected. Use `attachment` instead of `inline` to always
+download instead of showing the file in the browser.
+
+Only tested with nginx.
+
+</details>
+
+
 # Purging Old Files
 To check for any files that exceed their max age and delete them, you need to call index.php with the argument "purge"  
 ```bash
